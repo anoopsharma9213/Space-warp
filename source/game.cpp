@@ -13,15 +13,33 @@ void gamePlay::Update()
 			s3eAudioStop();
 			s3eDeviceRequestQuit();
 		}
-		else if(page == 1)
-		{
-			page = 0;
-		}
 	}
 
 
 	if(s3eDeviceGetInt(S3E_DEVICE_OS)==S3E_OS_ID_WP8)
 	{
+		switch (m_tem[0])
+		{
+			case 0:
+				m_tem[1] = s3eAudioGetInt(S3E_AUDIO_POSITION);
+				break;
+			case 10:
+				m_tem[2] = s3eAudioGetInt(S3E_AUDIO_POSITION);
+				break;
+			case 15:
+				m_tem[3] = s3eAudioGetInt(S3E_AUDIO_POSITION);
+				break;
+		}
+		m_tem[0]++;
+		if(m_tem[0]==16 && m_tem[1]==m_tem[2] && m_tem[2]==m_tem[3])
+		{
+			s3eAudioPause();
+			s3eAudioResume();
+		}
+		if (m_tem[0]==16)
+		{
+			m_tem[0]=0;
+		}
 		if(s3eAudioGetInt(S3E_AUDIO_DURATION)-s3eAudioGetInt(S3E_AUDIO_POSITION) <= 1000)
 		{
 			s3eAudioSetInt(S3E_AUDIO_POSITION,0);
@@ -30,7 +48,7 @@ void gamePlay::Update()
 	update_Environment();
 
 	if(page == 0)
-	{
+	{	
 		update_main_page();
 	}
 	else if(page == 1)
@@ -47,7 +65,6 @@ void gamePlay::Render()
 	IwRandSeed((int)s3eTimerGetMs());
 
 	draw_Environment();
-
 	if(page == 0)
 	{
 		draw_main_page();
@@ -64,7 +81,25 @@ gamePlay::gamePlay()
 {
 	page = 0;
 	resume = 0;
+	power = 1;
 
+	/*if(s3eWindowsPhoneAdAvailable())
+			{
+				ad_control = s3eWindowsPhoneAdCreate("test_client","Image480_80");
+				s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_HEIGHT,80);
+				s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_WIDTH,480);
+				s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_HALIGN,S3E_WINDOWSPHONE_ADCONTROL_HALIGN_CENTER);
+				s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_VALIGN,S3E_WINDOWSPHONE_ADCONTROL_VALIGN_BOTTOM);
+				if(s3eSocketGetInt(S3E_SOCKET_NETWORK_AVAILABLE))
+				{
+					s3eWindowsPhoneAdShow(ad_control);
+				}
+			}*/
+
+	for (int i = 0; i < 4; i++)
+	{
+		m_tem[i] = 0;
+	}
 	_store = new struct save;
 
 	if(s3eSecureStorageGet(_store,sizeof(struct save)) == S3E_RESULT_SUCCESS)
@@ -101,6 +136,7 @@ gamePlay::gamePlay()
 	{
 		g_speed = 3;
 	}
+	l_speed = g_speed;
 
 	Iw2DSetFont(getresource->get_font());
 
@@ -119,8 +155,6 @@ gamePlay::~gamePlay()
 
 void gamePlay::ini_Environment()
 {
-	l_speed = g_speed;
-
 	for (int i = 0; i < 50; i++)
 	{
 		pos_dot[i].x = (float)IwRandRange(Iw2DGetSurfaceWidth());
@@ -277,7 +311,10 @@ void gamePlay::draw_Environment()
 {
 	for (int i = 0; i < 10; i++)
 	{
-		Iw2DDrawImage(getresource->get_bg_star(),CIwFVec2(pos_star[i].x-size_star[i]/2,pos_star[i].y-size_star[i]/2),CIwFVec2((float)size_star[i],(float)size_star[i]));
+		if (pos_star[i].x >= -size_star[i] && pos_star[i].x <= Iw2DGetSurfaceWidth())
+		{
+			Iw2DDrawImage(getresource->get_bg_star(),CIwFVec2(pos_star[i].x-size_star[i]/2,pos_star[i].y-size_star[i]/2),CIwFVec2((float)size_star[i],(float)size_star[i]));
+		}
 	}
 
 	for (int i = 0; i < 50; i++)
@@ -287,30 +324,36 @@ void gamePlay::draw_Environment()
 	
 	for (int i = 0; i < 5; i++)
 	{
-		switch (p_type[i])
+		if(p_pos[i].x >= -p_size[i].x && p_pos[i].x <= Iw2DGetSurfaceWidth())
 		{
-			case 0:
-				Iw2DDrawImage(getresource->get_planet_1(),p_pos[i],p_size[i]);
-				break;
-			case 1:
-				Iw2DDrawImage(getresource->get_planet_2(),p_pos[i],p_size[i]);
-				break;
-			case 2:
-				Iw2DDrawImage(getresource->get_planet_3(),p_pos[i],p_size[i]);
-				break;
+			switch (p_type[i])
+			{
+				case 0:
+					Iw2DDrawImage(getresource->get_planet_1(),p_pos[i],p_size[i]);
+					break;
+				case 1:
+					Iw2DDrawImage(getresource->get_planet_2(),p_pos[i],p_size[i]);
+					break;
+				case 2:
+					Iw2DDrawImage(getresource->get_planet_3(),p_pos[i],p_size[i]);
+					break;
+			}
 		}
 	}
 
-	switch (cp_col)
+	if(cp_pos.x >= -cp_size.x && cp_pos.x <= Iw2DGetSurfaceWidth())
 	{
-		case 1:
-			Iw2DSetColour(0xff0000ff);
-			break;
-		case 2:
-			Iw2DSetColour(0xff00ffff);
-			break;
+		switch (cp_col)
+		{
+			case 1:
+				Iw2DSetColour(0xff0000ff);
+				break;
+			case 2:
+				Iw2DSetColour(0xff00ffff);
+				break;
+		}
+		Iw2DDrawImage(getresource->get_planet_5(),cp_pos,cp_size);
 	}
-	Iw2DDrawImage(getresource->get_planet_5(),cp_pos,cp_size);
 	Iw2DSetColour(0xffffffff);
 	
 }
@@ -319,6 +362,8 @@ void gamePlay::draw_Environment()
 
 void gamePlay::ini_main_page()
 {
+	l_speed = g_speed;
+
 	sc_size.y = Iw2DGetSurfaceHeight()*0.20f;
 	sc_size.x = sc_size.y*0.99f;
 
@@ -374,6 +419,8 @@ void gamePlay::ini_main_page()
 	energy_size.y = lives_size.y/2;
 	energy_pos.x = star_pos.x;
 	energy_pos.y = Iw2DGetSurfaceHeight()*0.05f*1.5f+2*(Iw2DGetSurfaceHeight()*0.005f)-energy_size.y/2;
+
+	reenergy_size.y = reenergy_size.x = Iw2DGetSurfaceHeight()*0.08f;
 	
 }
 
@@ -400,6 +447,8 @@ void gamePlay::update_main_page()
 		}
 	}
 
+	//-----------exhaust animation-------------
+
 	exhaust_sel++;
 	if(exhaust_sel==3)
 	{
@@ -407,20 +456,8 @@ void gamePlay::update_main_page()
 	}
 	exhaust_pos.x = sc_pos.x - exhaust_size[exhaust_sel].x;
 	exhaust_pos.y = sc_pos.y + sc_size.y/2 -exhaust_size[exhaust_sel].y/2;
-}
 
-void gamePlay::draw_main_page()
-{
-	Iw2DDrawImage(getresource->get_spacecraft(1),sc_pos,sc_size);
-	Iw2DDrawImage(getresource->get_exhaust(),exhaust_pos,exhaust_size[exhaust_sel]);
-	
-	if(trans == 0)
-	{
-		Iw2DDrawString("Tap to Start",CIwFVec2(0,Iw2DGetSurfaceHeight()*0.65f),CIwFVec2((float)Iw2DGetSurfaceWidth(),30),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
-	}
-
-	Iw2DDrawImageRegion(getresource->get_bonus_star(),CIwFVec2(Iw2DGetSurfaceWidth()*0.005f,Iw2DGetSurfaceHeight()*0.005f),CIwFVec2(Iw2DGetSurfaceHeight()*0.05f,Iw2DGetSurfaceHeight()*0.05f),CIwFVec2((float)bstar_x,(float)bstar_y),CIwFVec2(50,50));
-	
+	//-----------star animation----------------
 	bstar_x+=50;
 	if(bstar_x == 1000)
 	{
@@ -434,6 +471,19 @@ void gamePlay::draw_main_page()
 		}
 		bstar_x = 0;
 	}
+}
+
+void gamePlay::draw_main_page()
+{
+	Iw2DDrawImage(getresource->get_spacecraft(1),sc_pos,sc_size);
+	Iw2DDrawImage(getresource->get_exhaust(),exhaust_pos,exhaust_size[exhaust_sel]);
+	
+	if(trans == 0)
+	{
+		Iw2DDrawString("Tap to Start",CIwFVec2(0,Iw2DGetSurfaceHeight()*0.65f),CIwFVec2((float)Iw2DGetSurfaceWidth(),30),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+	}
+
+	Iw2DDrawImageRegion(getresource->get_bonus_star(),CIwFVec2(Iw2DGetSurfaceWidth()*0.005f,Iw2DGetSurfaceHeight()*0.005f),CIwFVec2(Iw2DGetSurfaceHeight()*0.05f,Iw2DGetSurfaceHeight()*0.05f),CIwFVec2((float)bstar_x,(float)bstar_y),CIwFVec2(50,50));
 
 	sprintf(str,"%.0f",total_star);
 	Iw2DDrawString(str,star_pos,star_size,IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
@@ -470,6 +520,8 @@ void gamePlay::ini_play_page()
 	for (int i = 0; i < 2; i++)
 	{
 		com_pos[i] = CIwFVec2(-1000,-1000);
+		reenergy_pos[i] = CIwFVec2(-1000,-1000);;
+		reenergy_show[i] = 1;
 	}
 
 	sequence = 0;
@@ -503,28 +555,38 @@ void gamePlay::ini_play_page()
 	}
 
 	blast = 0;
+	energy = 500;
 }
 
 void gamePlay::update_play_page()
 {
 	if (blast == 0 && energy>0)
 	{
-		if(l_speed < g_speed+1)
+		//-----------Back Key Press control---------------
+		if(s3eKeyboardGetState(s3eKeyBack) & S3E_KEY_STATE_PRESSED)
 		{
-			l_speed += 0.01f;
+			page = 0;
 		}
-		else if(l_speed < g_speed+2)
+
+		// speed control-------------------------
+		if(l_speed < g_speed+2)
 		{
-			l_speed += 0.005f;
+			l_speed += 0.1f;
 		}
 		else if(l_speed < g_speed+3)
 		{
-			l_speed += 0.0005f;
+			l_speed += 0.05f;
 		}
 		else if(l_speed < g_speed+4)
 		{
-			l_speed += 0.00001f;
+			l_speed += 0.005f;
 		}
+		else if(l_speed < g_speed+5)
+		{
+			l_speed += 0.001f;
+		}
+
+		//-----------------spacecraft up and down animation---------------------
 
 		if( (s3ePointerGetState(S3E_POINTER_BUTTON_SELECT) & S3E_POINTER_STATE_DOWN))
 		{
@@ -544,7 +606,11 @@ void gamePlay::update_play_page()
 			}
 		}
 		
+		//---------score calculation------------------
+
 		score++;
+
+		//----------exhaust animation----------------
 
 		exhaust_sel++;
 		if(exhaust_sel==3)
@@ -556,6 +622,7 @@ void gamePlay::update_play_page()
 
 		for (int i = 0; i < 8; i++)
 		{
+			//----------------astroid collison---------
 			if (compare(sc_pos,ast_pos[i],sc_size,ast_size) && ast_show[i]==1)
 			{
 				ast_show[i] = 0;
@@ -568,6 +635,8 @@ void gamePlay::update_play_page()
 		}
 		for (int i = 0; i < 2; i++)
 		{
+			//-----------------comet collison----------
+
 			if (com_compare(sc_pos,com_pos[i],sc_size,com_size))
 			{
 				blast=1;
@@ -576,10 +645,20 @@ void gamePlay::update_play_page()
 				CIwSoundSpec* SoundSpec = (CIwSoundSpec*)getresource->Effects->GetResNamed("explosion", IW_SOUND_RESTYPE_SPEC);
 				CIwSoundInst* SoundInstance = SoundSpec->Play();
 			}
+
+			//-----------energy absorption-----------------
+
+			if (star_compare(sc_pos,reenergy_pos[i],sc_size,reenergy_size) && reenergy_show[i] == 1)
+			{
+				reenergy_show[i] = 0;
+				energy = 500;
+			}
 		}
 
 		for (int i = 0; i < 12; i++)
 		{
+			//------------------star absortion and calculation-------------------
+
 			if(star_compare(sc_pos,bstar_pos[i],sc_size,bstar_size) && bstar_show[i] == 1)
 			{
 				bstar_show[i]=0;
@@ -588,6 +667,8 @@ void gamePlay::update_play_page()
 				CIwSoundInst* SoundInstance = SoundSpec->Play();
 			}
 		}
+
+		//----------------sequence generator -------------------------
 
 		if (bstar_pos[sequence*6].x <= 0)
 		{
@@ -629,53 +710,15 @@ void gamePlay::update_play_page()
 			{
 				bstar_show[i] = 1;
 			}
+			reenergy_show[sequence] = 1;
 		}
-		energy -= (int)(l_speed*0.2f);
-	}
+		
+		//----------------------energy decrease control---------------
 
-	for (int i = 0; i < 2; i++)
-	{
-		com_pos[i].x -= l_speed*3.5f;
-	}
-	
-	for (int i = 0; i < 8; i++)
-	{
-		ast_pos[i].x -= l_speed*2.0f;
-	}
-	
-	for (int i = 0; i < 12; i++)
-	{
-		bstar_pos[i].x -= l_speed*2.0f;
-	}
+		energy -= (int)(l_speed*0.3f);
 
-	if(lives == 0 || energy <= 0)
-	{
-		if( (s3ePointerGetState(S3E_POINTER_BUTTON_SELECT) & S3E_POINTER_STATE_DOWN) || (s3eKeyboardGetState(s3eKeyBack) & S3E_KEY_STATE_PRESSED))
-		{
-			if (high_score < score)
-			{
-				high_score = score;
-			}
-			total_star += star;
-			blast = 0;
-			page = 0;
-			ini_main_page();
-			ini_play_page();
-		}
-	}
-}
+		//--------------comet animation---------------------
 
-void gamePlay::draw_play_page()
-{
-	if(blast ==0 && energy > 0)
-	{
-		Iw2DDrawImage(getresource->get_spacecraft(0),sc_pos,sc_size);
-		Iw2DDrawImage(getresource->get_exhaust(),exhaust_pos,exhaust_size[exhaust_sel]);
-
-		for (int i = 0; i < 2; i++)
-		{
-			Iw2DDrawImageRegion(getresource->get_comet(),com_pos[i],com_size,CIwFVec2((float)com_x,0),CIwFVec2(128,50));
-		}
 		if(com_i == 2)
 		{
 			com_x += 128;
@@ -690,9 +733,10 @@ void gamePlay::draw_play_page()
 			com_i++;
 		}
 	}
-	else if(blast == 1)
+	else if (blast == 1)
 	{
-		Iw2DDrawImageRegion(getresource->get_explosion(),sc_pos,CIwFVec2(sc_size.y*1.33f,sc_size.y),CIwFVec2((float)b_x,(float)b_y),CIwFVec2(100,75));
+		//---------blast animation--------------------------
+
 		b_x+=100;
 		if(b_x==1300)
 		{
@@ -716,25 +760,47 @@ void gamePlay::draw_play_page()
 			}
 		}
 	}
-
-	for (int i = 0; i < 8; i++)
+	else if(lives == 0 || energy <= 0)
 	{
-		if(ast_show[i] == 1)
+		//-----------------Game Over State controls--------------------
+
+		if( (s3ePointerGetState(S3E_POINTER_BUTTON_SELECT) & S3E_POINTER_STATE_DOWN) || (s3eKeyboardGetState(s3eKeyBack) & S3E_KEY_STATE_PRESSED))
 		{
-			switch (ast_s[i])
+			if (high_score < score)
 			{
-				case 0:
-					Iw2DDrawImageRegion(getresource->get_astroid(0),ast_pos[i],ast_size,CIwFVec2((float)ast_x,0),CIwFVec2(75,80));
-					break;
-				case 1:
-					Iw2DDrawImageRegion(getresource->get_astroid(1),ast_pos[i],ast_size,CIwFVec2((float)ast_x,0),CIwFVec2(75,75));
-					break;
-				case 2:
-					Iw2DDrawImageRegion(getresource->get_astroid(2),ast_pos[i],ast_size,CIwFVec2((float)ast_x,0),CIwFVec2(75,68));
-					break;
+				high_score = score;
 			}
+			total_star += star;
+			blast = 0;
+			page = 0;
+			ini_main_page();
+			ini_play_page();
 		}
 	}
+
+	//-------------comet position------------------------
+
+	for (int i = 0; i < 2; i++)
+	{
+		com_pos[i].x -= l_speed*3.5f;
+		reenergy_pos[i].x -= l_speed*2.0f;
+	}
+
+	//---------------astroid position-------------------
+	
+	for (int i = 0; i < 8; i++)
+	{
+		ast_pos[i].x -= l_speed*2.0f;
+	}
+
+	//----------------star position---------------------
+	
+	for (int i = 0; i < 12; i++)
+	{
+		bstar_pos[i].x -= l_speed*2.0f;
+	}
+
+	//-------------astroid animation---------------------------
 	if(ast_i == 1)
 	{
 		ast_x += 75;
@@ -748,17 +814,9 @@ void gamePlay::draw_play_page()
 	{
 		ast_i++;
 	}
+
+	//----------------star animation----------------------------
 	
-	for (int i = 0; i < 12; i++)
-	{
-		if (bstar_show[i] == 1)
-		{
-			Iw2DDrawImageRegion(getresource->get_bonus_star(),bstar_pos[i],bstar_size,CIwFVec2((float)bstar_x,(float)bstar_y),CIwFVec2(50,50));
-		}
-	}
-
-	Iw2DDrawImageRegion(getresource->get_bonus_star(),CIwFVec2(Iw2DGetSurfaceWidth()*0.005f,Iw2DGetSurfaceHeight()*0.005f),CIwFVec2(Iw2DGetSurfaceHeight()*0.05f,Iw2DGetSurfaceHeight()*0.05f),CIwFVec2((float)bstar_x,(float)bstar_y),CIwFVec2(50,50));
-
 	bstar_x+=50;
 	if(bstar_x == 1000)
 	{
@@ -772,6 +830,62 @@ void gamePlay::draw_play_page()
 		}
 		bstar_x = 0;
 	}
+}
+
+void gamePlay::draw_play_page()
+{
+	if(blast == 0 && energy > 0)
+	{
+		Iw2DDrawImage(getresource->get_spacecraft(0),sc_pos,sc_size);
+		Iw2DDrawImage(getresource->get_exhaust(),exhaust_pos,exhaust_size[exhaust_sel]);
+
+		for (int i = 0; i < 2; i++)
+		{
+			if (com_pos[i].x >= -com_size.x && com_pos[i].x <= Iw2DGetSurfaceWidth())
+			{
+				Iw2DDrawImageRegion(getresource->get_comet(),com_pos[i],com_size,CIwFVec2((float)com_x,0),CIwFVec2(128,50));
+			}
+		}
+	}
+	else if(blast == 1)
+	{
+		Iw2DDrawImageRegion(getresource->get_explosion(),sc_pos,CIwFVec2(sc_size.y*1.33f,sc_size.y),CIwFVec2((float)b_x,(float)b_y),CIwFVec2(100,75));
+	}
+
+	for (int i = 0; i < 8; i++)
+	{
+		if(ast_pos[i].x >= -ast_size.x && ast_pos[i].x <= Iw2DGetSurfaceWidth())
+		{
+			if(ast_show[i] == 1)
+			{
+				switch (ast_s[i])
+				{
+					case 0:
+						Iw2DDrawImageRegion(getresource->get_astroid(0),ast_pos[i],ast_size,CIwFVec2((float)ast_x,0),CIwFVec2(75,80));
+						break;
+					case 1:
+						Iw2DDrawImageRegion(getresource->get_astroid(1),ast_pos[i],ast_size,CIwFVec2((float)ast_x,0),CIwFVec2(75,75));
+						break;
+					case 2:
+						Iw2DDrawImageRegion(getresource->get_astroid(2),ast_pos[i],ast_size,CIwFVec2((float)ast_x,0),CIwFVec2(75,68));
+						break;
+				}
+			}
+		}
+	}
+	
+	for (int i = 0; i < 12; i++)
+	{
+		if(bstar_pos[i].x >= - bstar_size.x && bstar_pos[i].x <= Iw2DGetSurfaceWidth())
+		{
+			if (bstar_show[i] == 1)
+			{
+				Iw2DDrawImageRegion(getresource->get_bonus_star(),bstar_pos[i],bstar_size,CIwFVec2((float)bstar_x,(float)bstar_y),CIwFVec2(50,50));
+			}
+		}
+	}
+
+	Iw2DDrawImageRegion(getresource->get_bonus_star(),CIwFVec2(Iw2DGetSurfaceWidth()*0.005f,Iw2DGetSurfaceHeight()*0.005f),CIwFVec2(Iw2DGetSurfaceHeight()*0.05f,Iw2DGetSurfaceHeight()*0.05f),CIwFVec2((float)bstar_x,(float)bstar_y),CIwFVec2(50,50));
 
 	sprintf(str,"%.0f",star);
 	Iw2DDrawString(str,star_pos,star_size,IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
@@ -784,10 +898,33 @@ void gamePlay::draw_play_page()
 	Iw2DDrawString(str,lives_pos,lives_size,IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
 
 	Iw2DDrawImage(getresource->get_energy(),CIwFVec2(Iw2DGetSurfaceWidth()*0.005f,Iw2DGetSurfaceHeight()*0.05f+2*(Iw2DGetSurfaceHeight()*0.005f)),CIwFVec2(Iw2DGetSurfaceHeight()*0.05f,Iw2DGetSurfaceHeight()*0.05f));
-	Iw2DSetColour(0xff00ff00);
+	if (energy < 150)
+	{
+		Iw2DSetColour(0xff0000ff);
+	}
+	else if(energy < 300)
+	{
+		Iw2DSetColour(0xff00ffff);
+	}
+	else
+	{
+		Iw2DSetColour(0xff00ff00);
+	}
+
 	Iw2DFillRect(energy_pos,CIwFVec2(Iw2DGetSurfaceWidth()*0.0003f*energy,energy_size.y));
 	Iw2DSetColour(0xffffffff);
 	Iw2DDrawRect(energy_pos,energy_size);
+
+	for (int i = 0; i < 2; i++)
+	{
+		if (reenergy_pos[i].x >= -reenergy_size.x && reenergy_pos[i].x <= Iw2DGetSurfaceWidth())
+		{
+			if (reenergy_show[i] == 1)
+			{
+				Iw2DDrawImage(getresource->get_energy(),reenergy_pos[i],reenergy_size);
+			}
+		}
+	}
 
 	if(lives == 0 || energy <= 0)
 	{
@@ -882,40 +1019,41 @@ bool gamePlay::star_compare(CIwFVec2 var_a, CIwFVec2 var_b, CIwFVec2 var_a_size,
 
 void gamePlay::sequence_1(int x)
 {
-	bstar_pos[6*x].x = (float)Iw2DGetSurfaceWidth();
-	ast_pos[4*x].x = bstar_pos[6*x+1].x = bstar_pos[6*x].x + Iw2DGetSurfaceWidth()/6;
+	ast_pos[4*x].x = bstar_pos[6*x].x = (float)Iw2DGetSurfaceWidth();
+	bstar_pos[6*x+1].x = bstar_pos[6*x].x + Iw2DGetSurfaceWidth()/6;
 	ast_pos[4*x+1].x = bstar_pos[6*x+2].x = bstar_pos[6*x+1].x + Iw2DGetSurfaceWidth()/6;
 	ast_pos[4*x+2].x = bstar_pos[6*x+3].x = bstar_pos[6*x+2].x + Iw2DGetSurfaceWidth()/6;
-	bstar_pos[6*x+4].x = bstar_pos[6*x+3].x + Iw2DGetSurfaceWidth()/6;
-	com_pos[x].x = ast_pos[4*x+3].x = bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
+	com_pos[x].x = bstar_pos[6*x+4].x = bstar_pos[6*x+3].x + Iw2DGetSurfaceWidth()/6;
+	reenergy_pos[x].x = ast_pos[4*x+3].x = bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
 
-	bstar_pos[6*x+5].y = bstar_pos[6*x+2].y = bstar_pos[6*x].y = Iw2DGetSurfaceHeight()*0.25f-bstar_size.y/2;
-	bstar_pos[6*x+4].y = bstar_pos[6*x+1].y = Iw2DGetSurfaceHeight()*0.50f-bstar_size.y/2;
-	bstar_pos[6*x+3].y = Iw2DGetSurfaceHeight()*0.75f-bstar_size.y/2;
+	bstar_pos[6*x+3].y = bstar_pos[6*x+2].y = Iw2DGetSurfaceHeight()*0.25f-bstar_size.y/2;
+	bstar_pos[6*x+5].y = bstar_pos[6*x+4].y = bstar_pos[6*x+1].y = bstar_pos[6*x].y = Iw2DGetSurfaceHeight()*0.50f-bstar_size.y/2;
 
 	ast_pos[4*x].y = Iw2DGetSurfaceHeight()*0.25f-ast_size.y/2;
-	ast_pos[4*x+3].y = ast_pos[4*x+2].y = ast_pos[4*x+1].y = Iw2DGetSurfaceHeight()*0.50f-ast_size.y/2;
+	ast_pos[4*x+2].y = ast_pos[4*x+1].y = Iw2DGetSurfaceHeight()*0.50f-ast_size.y/2;
+	ast_pos[4*x+3].y = Iw2DGetSurfaceHeight()*0.75f-ast_size.y/2;
 
 	com_pos[x].y = Iw2DGetSurfaceHeight()*0.75f-com_size.y/2;
+	reenergy_pos[x].y = Iw2DGetSurfaceHeight()*0.25f-reenergy_size.y/2;
 }
 
 void gamePlay::sequence_2(int x)
 {
 	ast_pos[4*x].x = bstar_pos[6*x].x = (float)Iw2DGetSurfaceWidth();
-	ast_pos[4*x+1].x = bstar_pos[6*x+1].x = bstar_pos[6*x].x + Iw2DGetSurfaceWidth()/6;
-	ast_pos[4*x+2].x = bstar_pos[6*x+2].x = bstar_pos[6*x+1].x + Iw2DGetSurfaceWidth()/6;
-	bstar_pos[6*x+3].x = bstar_pos[6*x+2].x + Iw2DGetSurfaceWidth()/6;
-	ast_pos[4*x+3].x = bstar_pos[6*x+4].x = bstar_pos[6*x+3].x + Iw2DGetSurfaceWidth()/6;
-	com_pos[x].x = bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
+	bstar_pos[6*x+1].x = bstar_pos[6*x].x + Iw2DGetSurfaceWidth()/6;
+	ast_pos[4*x+1].x = bstar_pos[6*x+2].x = bstar_pos[6*x+1].x + Iw2DGetSurfaceWidth()/6;
+	ast_pos[4*x+2].x = bstar_pos[6*x+3].x = bstar_pos[6*x+2].x + Iw2DGetSurfaceWidth()/6;
+	com_pos[x].x = bstar_pos[6*x+4].x = bstar_pos[6*x+3].x + Iw2DGetSurfaceWidth()/6;
+	reenergy_pos[x].x = ast_pos[4*x+3].x = bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
 	
-	bstar_pos[6*x+3].y = bstar_pos[6*x+2].y = bstar_pos[6*x].y = Iw2DGetSurfaceHeight()*0.25f-bstar_size.y/2;
+	bstar_pos[6*x+5].y = bstar_pos[6*x+4].y = bstar_pos[6*x+3].y = bstar_pos[6*x+2].y = bstar_pos[6*x].y = Iw2DGetSurfaceHeight()*0.25f-bstar_size.y/2;
 	bstar_pos[6*x+1].y = Iw2DGetSurfaceHeight()*0.50f-bstar_size.y/2;
-	bstar_pos[6*x+5].y = bstar_pos[6*x+4].y = Iw2DGetSurfaceHeight()*0.75f-bstar_size.y/2;
 	
-	ast_pos[4*x+3].y = ast_pos[4*x+2].y = ast_pos[4*x].y = Iw2DGetSurfaceHeight()*0.50f-ast_size.y/2;
-	ast_pos[4*x+1].y = Iw2DGetSurfaceHeight()*0.75f-ast_size.y/2;
+	ast_pos[4*x+2].y = ast_pos[4*x+1].y = ast_pos[4*x].y = Iw2DGetSurfaceHeight()*0.50f-ast_size.y/2;
+	ast_pos[4*x+3].y = Iw2DGetSurfaceHeight()*0.75f-ast_size.y/2;
 
-	com_pos[x].y = Iw2DGetSurfaceHeight()*0.25f-com_size.y/2;
+	com_pos[x].y = Iw2DGetSurfaceHeight()*0.50f-com_size.y/2;
+	reenergy_pos[x].y = Iw2DGetSurfaceHeight()*0.50f-reenergy_size.y/2;
 }
 
 void gamePlay::sequence_3(int x)
@@ -925,16 +1063,16 @@ void gamePlay::sequence_3(int x)
 	ast_pos[4*x+1].x = bstar_pos[6*x+2].x = bstar_pos[6*x+1].x + Iw2DGetSurfaceWidth()/6;
 	ast_pos[4*x+2].x = bstar_pos[6*x+3].x = bstar_pos[6*x+2].x + Iw2DGetSurfaceWidth()/6;
 	ast_pos[4*x+3].x = bstar_pos[6*x+4].x = bstar_pos[6*x+3].x + Iw2DGetSurfaceWidth()/6;
-	com_pos[x].x = bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
+	reenergy_pos[x].x = com_pos[x].x = bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
 	
-	bstar_pos[6*x+3].y = bstar_pos[6*x].y = Iw2DGetSurfaceHeight()*0.50f-bstar_size.y/2;
-	bstar_pos[6*x+5].y = bstar_pos[6*x+4].y = bstar_pos[6*x+2].y = bstar_pos[6*x+1].y = Iw2DGetSurfaceHeight()*0.75f-bstar_size.y/2;
+	bstar_pos[6*x+5].y = bstar_pos[6*x+1].y = bstar_pos[6*x].y = Iw2DGetSurfaceHeight()*0.50f-bstar_size.y/2;
+	bstar_pos[6*x+4].y = bstar_pos[6*x+3].y = bstar_pos[6*x+2].y = Iw2DGetSurfaceHeight()*0.75f-bstar_size.y/2;
 	
 	ast_pos[4*x].y = Iw2DGetSurfaceHeight()*0.25f-ast_size.y/2;
-	ast_pos[4*x+3].y = ast_pos[4*x+1].y = Iw2DGetSurfaceHeight()*0.50f-ast_size.y/2;
-	ast_pos[4*x+2].y = Iw2DGetSurfaceHeight()*0.75f-ast_size.y/2;
+	ast_pos[4*x+3].y = ast_pos[4*x+2].y = ast_pos[4*x+1].y = Iw2DGetSurfaceHeight()*0.50f-ast_size.y/2;
 
 	com_pos[x].y = Iw2DGetSurfaceHeight()*0.25f-com_size.y/2;
+	reenergy_pos[x].y = Iw2DGetSurfaceHeight()*0.75f-reenergy_size.y/2;
 }
 
 void gamePlay::sequence_4(int x)
@@ -943,18 +1081,19 @@ void gamePlay::sequence_4(int x)
 	ast_pos[4*x+1].x = bstar_pos[6*x+1].x = bstar_pos[6*x].x + Iw2DGetSurfaceWidth()/6;
 	bstar_pos[6*x+2].x = bstar_pos[6*x+1].x + Iw2DGetSurfaceWidth()/6;
 	ast_pos[4*x+2].x = bstar_pos[6*x+3].x = bstar_pos[6*x+2].x + Iw2DGetSurfaceWidth()/6;
-	bstar_pos[6*x+4].x = bstar_pos[6*x+3].x + Iw2DGetSurfaceWidth()/6;
-	com_pos[x].x = ast_pos[4*x+3].x = bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
+	ast_pos[4*x+3].x = bstar_pos[6*x+4].x = bstar_pos[6*x+3].x + Iw2DGetSurfaceWidth()/6;
+	reenergy_pos[x].x = com_pos[x].x = bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
 	
 	bstar_pos[6*x+1].y = Iw2DGetSurfaceHeight()*0.25f-bstar_size.y/2;
 	bstar_pos[6*x+5].y = bstar_pos[6*x+2].y = bstar_pos[6*x].y = Iw2DGetSurfaceHeight()*0.50f-bstar_size.y/2;
 	bstar_pos[6*x+4].y = bstar_pos[6*x+3].y = Iw2DGetSurfaceHeight()*0.75f-bstar_size.y/2;
 	
-	ast_pos[4*x+3].y = ast_pos[4*x].y = Iw2DGetSurfaceHeight()*0.25f-ast_size.y/2;
-	ast_pos[4*x+2].y = Iw2DGetSurfaceHeight()*0.50f-ast_size.y/2;
+	ast_pos[4*x].y = Iw2DGetSurfaceHeight()*0.25f-ast_size.y/2;
+	ast_pos[4*x+3].y = ast_pos[4*x+2].y = Iw2DGetSurfaceHeight()*0.50f-ast_size.y/2;
 	ast_pos[4*x+1].y = Iw2DGetSurfaceHeight()*0.75f-ast_size.y/2;
 
 	com_pos[x].y = Iw2DGetSurfaceHeight()*0.75f-com_size.y/2;
+	reenergy_pos[x].y = Iw2DGetSurfaceHeight()*0.25f-reenergy_size.y/2;
 }
 
 void gamePlay::sequence_5(int x)
@@ -964,16 +1103,17 @@ void gamePlay::sequence_5(int x)
 	bstar_pos[6*x+2].x = bstar_pos[6*x+1].x + Iw2DGetSurfaceWidth()/6;
 	ast_pos[4*x+2].x = bstar_pos[6*x+3].x = bstar_pos[6*x+2].x + Iw2DGetSurfaceWidth()/6;
 	com_pos[x].x = bstar_pos[6*x+4].x = bstar_pos[6*x+3].x + Iw2DGetSurfaceWidth()/6;
-	ast_pos[4*x+3].x = bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
+	reenergy_pos[x].x = ast_pos[4*x+3].x = bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
 	
-	bstar_pos[6*x+1].y = bstar_pos[6*x].y = Iw2DGetSurfaceHeight()*0.25f-bstar_size.y/2;
-	bstar_pos[6*x+5].y = bstar_pos[6*x+4].y = bstar_pos[6*x+3].y = bstar_pos[6*x+2].y = Iw2DGetSurfaceHeight()*0.50f-bstar_size.y/2;
+	bstar_pos[6*x+5].y = bstar_pos[6*x+1].y = bstar_pos[6*x].y = Iw2DGetSurfaceHeight()*0.25f-bstar_size.y/2;
+	bstar_pos[6*x+4].y = bstar_pos[6*x+3].y = bstar_pos[6*x+2].y = Iw2DGetSurfaceHeight()*0.50f-bstar_size.y/2;
 	
 	ast_pos[4*x+2].y = Iw2DGetSurfaceHeight()*0.25f-ast_size.y/2;
 	ast_pos[4*x+1].y = ast_pos[4*x].y = Iw2DGetSurfaceHeight()*0.50f-ast_size.y/2;
 	ast_pos[4*x+3].y = Iw2DGetSurfaceHeight()*0.75f-ast_size.y/2;
 
 	com_pos[x].y = Iw2DGetSurfaceHeight()*0.75f-com_size.y/2;
+	reenergy_pos[x].y = Iw2DGetSurfaceHeight()*0.50f-reenergy_size.y/2;
 }
 
 void gamePlay::sequence_6(int x)
@@ -982,37 +1122,36 @@ void gamePlay::sequence_6(int x)
 	bstar_pos[6*x+1].x = bstar_pos[6*x].x + Iw2DGetSurfaceWidth()/6;
 	ast_pos[4*x+1].x = bstar_pos[6*x+2].x = bstar_pos[6*x+1].x + Iw2DGetSurfaceWidth()/6;
 	ast_pos[4*x+2].x = bstar_pos[6*x+3].x = bstar_pos[6*x+2].x + Iw2DGetSurfaceWidth()/6;
-	ast_pos[4*x+3].x = bstar_pos[6*x+4].x = bstar_pos[6*x+3].x + Iw2DGetSurfaceWidth()/6;
-	com_pos[x].x = bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
+	com_pos[x].x = bstar_pos[6*x+4].x = bstar_pos[6*x+3].x + Iw2DGetSurfaceWidth()/6;
+	reenergy_pos[x].x = ast_pos[4*x+3].x = bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
 	
-	bstar_pos[6*x+1].y = bstar_pos[6*x].y = Iw2DGetSurfaceHeight()*0.75f-bstar_size.y/2;
-	bstar_pos[6*x+3].y = bstar_pos[6*x+2].y = Iw2DGetSurfaceHeight()*0.25f-bstar_size.y/2;
-	bstar_pos[6*x+5].y = bstar_pos[6*x+4].y = Iw2DGetSurfaceHeight()*0.50f-bstar_size.y/2;
+	bstar_pos[6*x+3].y = bstar_pos[6*x+2].y = bstar_pos[6*x].y = Iw2DGetSurfaceHeight()*0.25f-bstar_size.y/2;
+	bstar_pos[6*x+5].y = bstar_pos[6*x+4].y = bstar_pos[6*x+1].y = Iw2DGetSurfaceHeight()*0.50f-bstar_size.y/2;
 	
 	ast_pos[4*x+2].y = ast_pos[4*x+1].y = ast_pos[4*x].y = Iw2DGetSurfaceHeight()*0.50f-ast_size.y/2;
 	ast_pos[4*x+3].y = Iw2DGetSurfaceHeight()*0.75f-ast_size.y/2;
 
 	com_pos[x].y = Iw2DGetSurfaceHeight()*0.75f-com_size.y/2;
+	reenergy_pos[x].y = Iw2DGetSurfaceHeight()*0.25f-reenergy_size.y/2;
 }
 
 void gamePlay::sequence_7(int x)
 {
-	bstar_pos[6*x].x = (float)Iw2DGetSurfaceWidth();
-	ast_pos[4*x].x = bstar_pos[6*x+1].x = bstar_pos[6*x].x + Iw2DGetSurfaceWidth()/6;
+	ast_pos[4*x].x = bstar_pos[6*x].x = (float)Iw2DGetSurfaceWidth();
+	bstar_pos[6*x+1].x = bstar_pos[6*x].x + Iw2DGetSurfaceWidth()/6;
 	ast_pos[4*x+1].x = bstar_pos[6*x+2].x = bstar_pos[6*x+1].x + Iw2DGetSurfaceWidth()/6;
 	bstar_pos[6*x+3].x = bstar_pos[6*x+2].x + Iw2DGetSurfaceWidth()/6;
-	ast_pos[4*x+2].x = bstar_pos[6*x+4].x = bstar_pos[6*x+3].x + Iw2DGetSurfaceWidth()/6;
-	com_pos[x].x = ast_pos[4*x+3].x = bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
+	com_pos[x].x = ast_pos[4*x+2].x = bstar_pos[6*x+4].x = bstar_pos[6*x+3].x + Iw2DGetSurfaceWidth()/6;
+	reenergy_pos[x].x = ast_pos[4*x+3].x = bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
 	
-	bstar_pos[6*x+5].y = bstar_pos[6*x+2].y = Iw2DGetSurfaceHeight()*0.25f-bstar_size.y/2;
-	bstar_pos[6*x+4].y = bstar_pos[6*x+3].y = bstar_pos[6*x+1].y = Iw2DGetSurfaceHeight()*0.50f-bstar_size.y/2;
-	bstar_pos[6*x].y = Iw2DGetSurfaceHeight()*0.75f-bstar_size.y/2;
+	bstar_pos[6*x+4].y = bstar_pos[6*x+2].y = Iw2DGetSurfaceHeight()*0.25f-bstar_size.y/2;
+	bstar_pos[6*x+5].y = bstar_pos[6*x+3].y = bstar_pos[6*x+1].y = bstar_pos[6*x].y = Iw2DGetSurfaceHeight()*0.50f-bstar_size.y/2;
 	
-	ast_pos[4*x+2].y = Iw2DGetSurfaceHeight()*0.25f-ast_size.y/2;
-	ast_pos[4*x+3].y = ast_pos[4*x+1].y = Iw2DGetSurfaceHeight()*0.50f-ast_size.y/2;
-	ast_pos[4*x].y = Iw2DGetSurfaceHeight()*0.75f-ast_size.y/2;
+	ast_pos[4*x+2].y = Iw2DGetSurfaceHeight()*0.50f-ast_size.y/2;
+	ast_pos[4*x+3].y = ast_pos[4*x+1].y = ast_pos[4*x].y = Iw2DGetSurfaceHeight()*0.75f-ast_size.y/2;
 
-	com_pos[x].y = Iw2DGetSurfaceHeight()*0.75f-com_size.y/2;
+	com_pos[x].y = Iw2DGetSurfaceHeight()*0.50f-com_size.y/2;
+	reenergy_pos[x].y = Iw2DGetSurfaceHeight()*0.25f-reenergy_size.y/2;
 }
 
 void gamePlay::sequence_8(int x)
@@ -1021,17 +1160,19 @@ void gamePlay::sequence_8(int x)
 	ast_pos[4*x+1].x = bstar_pos[6*x+1].x = bstar_pos[6*x].x + Iw2DGetSurfaceWidth()/6;
 	bstar_pos[6*x+2].x = bstar_pos[6*x+1].x + Iw2DGetSurfaceWidth()/6;
 	ast_pos[4*x+2].x = bstar_pos[6*x+3].x = bstar_pos[6*x+2].x + Iw2DGetSurfaceWidth()/6;
-	bstar_pos[6*x+4].x = bstar_pos[6*x+3].x + Iw2DGetSurfaceWidth()/6;
-	com_pos[x].x = ast_pos[4*x+3].x = bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
+	ast_pos[4*x+3].x = bstar_pos[6*x+4].x = bstar_pos[6*x+3].x + Iw2DGetSurfaceWidth()/6;
+	reenergy_pos[x].x = com_pos[x].x = bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
 	
-	bstar_pos[6*x+4].y = bstar_pos[6*x+1].y = bstar_pos[6*x].y = Iw2DGetSurfaceHeight()*0.25f-bstar_size.y/2;
-	bstar_pos[6*x+3].y = Iw2DGetSurfaceHeight()*0.50f-bstar_size.y/2;
-	bstar_pos[6*x+5].y = bstar_pos[6*x+2].y = Iw2DGetSurfaceHeight()*0.75f-bstar_size.y/2;
+	bstar_pos[6*x+3].y = bstar_pos[6*x+2].y = bstar_pos[6*x+1].y = bstar_pos[6*x].y = Iw2DGetSurfaceHeight()*0.25f-bstar_size.y/2;
+	bstar_pos[6*x+4].y = Iw2DGetSurfaceHeight()*0.50f-bstar_size.y/2;
+	bstar_pos[6*x+5].y = Iw2DGetSurfaceHeight()*0.75f-bstar_size.y/2;
 	
-	ast_pos[4*x+3].y = ast_pos[4*x].y = Iw2DGetSurfaceHeight()*0.50f-ast_size.y/2;
-	ast_pos[4*x+2].y = ast_pos[4*x+1].y = Iw2DGetSurfaceHeight()*0.75f-ast_size.y/2;
+	ast_pos[4*x+3].y = Iw2DGetSurfaceHeight()*0.25f-ast_size.y/2;
+	ast_pos[4*x+1].y = ast_pos[4*x].y = Iw2DGetSurfaceHeight()*0.50f-ast_size.y/2;
+	ast_pos[4*x+2].y = Iw2DGetSurfaceHeight()*0.75f-ast_size.y/2;
 
-	com_pos[x].y = Iw2DGetSurfaceHeight()*0.25f-com_size.y/2;
+	com_pos[x].y = Iw2DGetSurfaceHeight()*0.50f-com_size.y/2;
+	reenergy_pos[x].y = Iw2DGetSurfaceHeight()*0.25f-reenergy_size.y/2;
 }
 
 void gamePlay::sequence_9(int x)
@@ -1041,26 +1182,26 @@ void gamePlay::sequence_9(int x)
 	ast_pos[4*x+1].x = bstar_pos[6*x+2].x = bstar_pos[6*x+1].x + Iw2DGetSurfaceWidth()/6;
 	ast_pos[4*x+2].x = bstar_pos[6*x+3].x = bstar_pos[6*x+2].x + Iw2DGetSurfaceWidth()/6;
 	ast_pos[4*x+3].x = bstar_pos[6*x+4].x = bstar_pos[6*x+3].x + Iw2DGetSurfaceWidth()/6;
-	com_pos[x].x = bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
+	reenergy_pos[x].x = com_pos[x].x = bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
 	
-	bstar_pos[6*x+5].y = bstar_pos[6*x+2].y = bstar_pos[6*x+1].y = Iw2DGetSurfaceHeight()*0.50f-bstar_size.y/2;
-	bstar_pos[6*x+4].y = bstar_pos[6*x+3].y = bstar_pos[6*x].y = Iw2DGetSurfaceHeight()*0.75f-bstar_size.y/2;
+	bstar_pos[6*x+4].y = bstar_pos[6*x+3].y = bstar_pos[6*x+2].y = Iw2DGetSurfaceHeight()*0.50f-bstar_size.y/2;
+	bstar_pos[6*x+5].y = bstar_pos[6*x+1].y = bstar_pos[6*x].y = Iw2DGetSurfaceHeight()*0.75f-bstar_size.y/2;
 	
-	ast_pos[4*x+3].y = Iw2DGetSurfaceHeight()*0.25f-ast_size.y/2;
-	ast_pos[4*x+2].y = ast_pos[4*x].y = Iw2DGetSurfaceHeight()*0.50f-ast_size.y/2;
+	ast_pos[4*x+3].y = ast_pos[4*x+2].y = ast_pos[4*x].y = Iw2DGetSurfaceHeight()*0.25f-ast_size.y/2;
 	ast_pos[4*x+1].y = Iw2DGetSurfaceHeight()*0.75f-ast_size.y/2;
 
-	com_pos[x].y = Iw2DGetSurfaceHeight()*0.75f-com_size.y/2;
+	com_pos[x].y = Iw2DGetSurfaceHeight()*0.50f-com_size.y/2;
+	reenergy_pos[x].y = Iw2DGetSurfaceHeight()*0.25f-reenergy_size.y/2;
 }
 
 void gamePlay::sequence_10(int x)
 {
-	bstar_pos[6*x].x = (float)Iw2DGetSurfaceWidth();
-	com_pos[x].x = ast_pos[4*x].x = bstar_pos[6*x+1].x = bstar_pos[6*x].x + Iw2DGetSurfaceWidth()/6;
+	ast_pos[4*x].x = bstar_pos[6*x].x = (float)Iw2DGetSurfaceWidth();
+	bstar_pos[6*x+1].x = bstar_pos[6*x].x + Iw2DGetSurfaceWidth()/6;
 	ast_pos[4*x+1].x = bstar_pos[6*x+2].x = bstar_pos[6*x+1].x + Iw2DGetSurfaceWidth()/6;
 	bstar_pos[6*x+3].x = bstar_pos[6*x+2].x + Iw2DGetSurfaceWidth()/6;
-	ast_pos[4*x+2].x = bstar_pos[6*x+4].x = bstar_pos[6*x+3].x + Iw2DGetSurfaceWidth()/6;
-	ast_pos[4*x+3].x = bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
+	com_pos[x].x = ast_pos[4*x+2].x = bstar_pos[6*x+4].x = bstar_pos[6*x+3].x + Iw2DGetSurfaceWidth()/6;
+	reenergy_pos[x].x = ast_pos[4*x+3].x = bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
 	
 	bstar_pos[6*x+2].y = Iw2DGetSurfaceHeight()*0.25f-bstar_size.y/2;
 	bstar_pos[6*x+4].y = bstar_pos[6*x+3].y = bstar_pos[6*x+1].y = bstar_pos[6*x].y = Iw2DGetSurfaceHeight()*0.50f-bstar_size.y/2;
@@ -1070,7 +1211,8 @@ void gamePlay::sequence_10(int x)
 	ast_pos[4*x+1].y = Iw2DGetSurfaceHeight()*0.50f-ast_size.y/2;
 	ast_pos[4*x+2].y = Iw2DGetSurfaceHeight()*0.75f-ast_size.y/2;
 
-	com_pos[x].y = Iw2DGetSurfaceHeight()*0.75f-com_size.y/2;
+	com_pos[x].y = Iw2DGetSurfaceHeight()*0.25f-com_size.y/2;
+	reenergy_pos[x].y = Iw2DGetSurfaceHeight()*0.50f-reenergy_size.y/2;
 }
 
 void gamePlay::sequence_11(int x)
@@ -1080,16 +1222,16 @@ void gamePlay::sequence_11(int x)
 	ast_pos[4*x+1].x = bstar_pos[6*x+2].x = bstar_pos[6*x+1].x + Iw2DGetSurfaceWidth()/6;
 	ast_pos[4*x+2].x = bstar_pos[6*x+3].x = bstar_pos[6*x+2].x + Iw2DGetSurfaceWidth()/6;
 	com_pos[x].x = bstar_pos[6*x+4].x = bstar_pos[6*x+3].x + Iw2DGetSurfaceWidth()/6;
-	ast_pos[4*x+3].x = bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
+	reenergy_pos[x].x = ast_pos[4*x+3].x = bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
 	
-	bstar_pos[6*x+5].y = Iw2DGetSurfaceHeight()*0.25f-bstar_size.y/2;
-	bstar_pos[6*x].y = Iw2DGetSurfaceHeight()*0.50f-bstar_size.y/2;
+	bstar_pos[6*x+5].y = bstar_pos[6*x].y = Iw2DGetSurfaceHeight()*0.50f-bstar_size.y/2;
 	bstar_pos[6*x+4].y = bstar_pos[6*x+3].y = bstar_pos[6*x+2].y = bstar_pos[6*x+1].y = Iw2DGetSurfaceHeight()*0.75f-bstar_size.y/2;
 	
-	ast_pos[4*x].y = Iw2DGetSurfaceHeight()*0.25f-ast_size.y/2;
-	ast_pos[4*x+3].y = ast_pos[4*x+2].y = ast_pos[4*x+1].y = Iw2DGetSurfaceHeight()*0.50f-ast_size.y/2;
+	ast_pos[4*x+3].y = ast_pos[4*x].y = Iw2DGetSurfaceHeight()*0.25f-ast_size.y/2;
+	ast_pos[4*x+2].y = ast_pos[4*x+1].y = Iw2DGetSurfaceHeight()*0.50f-ast_size.y/2;
 	
 	com_pos[x].y = Iw2DGetSurfaceHeight()*0.25f-com_size.y/2;
+	reenergy_pos[x].y = Iw2DGetSurfaceHeight()*0.75f-reenergy_size.y/2;
 }
 
 void gamePlay::sequence_12(int x)
@@ -1098,15 +1240,16 @@ void gamePlay::sequence_12(int x)
 	ast_pos[4*x].x = bstar_pos[6*x+1].x = bstar_pos[6*x].x + Iw2DGetSurfaceWidth()/6;
 	ast_pos[4*x+1].x = bstar_pos[6*x+2].x = bstar_pos[6*x+1].x + Iw2DGetSurfaceWidth()/6;
 	ast_pos[4*x+2].x = bstar_pos[6*x+3].x = bstar_pos[6*x+2].x + Iw2DGetSurfaceWidth()/6;
-	com_pos[x].x = ast_pos[4*x+3].x = bstar_pos[6*x+4].x = bstar_pos[6*x+3].x + Iw2DGetSurfaceWidth()/6;
-	bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
+	ast_pos[4*x+3].x = bstar_pos[6*x+4].x = bstar_pos[6*x+3].x + Iw2DGetSurfaceWidth()/6;
+	com_pos[x].x = reenergy_pos[x].x = bstar_pos[6*x+5].x = bstar_pos[6*x+4].x + Iw2DGetSurfaceWidth()/6;
 	
-	bstar_pos[6*x+4].y = bstar_pos[6*x+3].y = bstar_pos[6*x+2].y = bstar_pos[6*x+1].y = Iw2DGetSurfaceHeight()*0.25f-bstar_size.y/2;
-	bstar_pos[6*x+5].y = bstar_pos[6*x].y = Iw2DGetSurfaceHeight()*0.75f-bstar_size.y/2;
+	bstar_pos[6*x+5].y = bstar_pos[6*x+4].y = bstar_pos[6*x+3].y = bstar_pos[6*x+2].y = bstar_pos[6*x+1].y = Iw2DGetSurfaceHeight()*0.25f-bstar_size.y/2;
+	bstar_pos[6*x].y = Iw2DGetSurfaceHeight()*0.50f-bstar_size.y/2;
 	
 	ast_pos[4*x+3].y = ast_pos[4*x+2].y = ast_pos[4*x+1].y = ast_pos[4*x].y = Iw2DGetSurfaceHeight()*0.50f-ast_size.y/2;
 
 	com_pos[x].y = Iw2DGetSurfaceHeight()*0.75f-com_size.y/2;
+	reenergy_pos[x].y = Iw2DGetSurfaceHeight()*0.50f-reenergy_size.y/2;
 }
 
 gamePlay *newgame = 0;

@@ -36,7 +36,7 @@ int main()
             nextUpdate = GetUpdateFrame();
             if( nextUpdate != currentUpdate )
                 break;
-            s3eDeviceYield(1);
+            s3eDeviceYield(0);
         }
 
         // execute update steps
@@ -58,7 +58,7 @@ int main()
         s3eKeyboardUpdate();
 
         // S3E applications should yield frequently
-        s3eDeviceYield();
+        s3eDeviceYield(0);
     }
 	delete getresource;
 	delete newgame;

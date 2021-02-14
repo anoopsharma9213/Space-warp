@@ -12,4 +12,7 @@ CIwResGroup
 
 	"design/spacecraft_1.png"
 	"design/spacecraft_2.png"
+
+	"design/power.png"
+	"design/powerglow.png"
 }

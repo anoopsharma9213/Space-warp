@@ -24,6 +24,8 @@ Resources::Resources()
 	exhaust = Iw2DCreateImageResource("exhaust");
 	energy = Iw2DCreateImageResource("energy");
 	bonus_star = Iw2DCreateImageResource("bonus_star");
+	power = Iw2DCreateImageResource("power");
+	powerglow = Iw2DCreateImageResource("powerglow");
 
 	astroid[0] = Iw2DCreateImageResource("astroid_1");
 	astroid[1] = Iw2DCreateImageResource("astroid_2");
@@ -48,6 +50,9 @@ Resources::~Resources()
 	delete exhaust;
 	delete energy;
 	delete bonus_star;
+
+	delete power;
+	delete powerglow;
 
 	for (int i = 0; i < 3; i++)
 	{

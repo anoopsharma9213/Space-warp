@@ -20,6 +20,10 @@ private:
 
 	int m_tem[4];
 
+	//-----Ads---------------------
+
+	s3eWindowsPhoneAd *ad_control, *disp_control;
+
 	//-----Environment--------------
 	CIwFVec2 pos_star[10];
 	int size_star[10], phase_star[10], speed_star[10];
@@ -60,6 +64,12 @@ private:
 	float star, score, lives;
 	float high_score, total_star;
 	CIwFVec2 star_pos, star_size, score_pos, score_size, lives_pos, lives_size;
+
+	//------Powerups and resources----
+	CIwFVec2 reenergy_pos[2], reenergy_size;
+	int reenergy_show[2];
+	CIwFVec2 power_pos, power_size, powerglow_pos, powerglow_size;
+	int power;
 
 public:
 

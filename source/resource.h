@@ -22,6 +22,8 @@ private:
 	// Gameplay--------------------
 
 	CIw2DImage* spacecraft[5];
+	CIw2DImage* power;
+	CIw2DImage* powerglow;
 	CIw2DImage *exhaust;
 	CIw2DImage *energy;
 	
@@ -47,8 +49,10 @@ public:
 	CIw2DImage *get_spacecraft(int a)	{return spacecraft[a];}
 	CIw2DImage *get_exhaust()			{return exhaust;}
 	CIw2DImage *get_energy()			{return energy;}
+	CIw2DImage *get_power()				{return power;}
+	CIw2DImage *get_powerglow()			{return powerglow;}
 
-	CIw2DImage *get_astroid(int a)			{return astroid[a];}
+	CIw2DImage *get_astroid(int a)		{return astroid[a];}
 	CIw2DImage *get_comet()				{return comet;}
 	CIw2DImage *get_explosion()			{return explosion;}
 
