@@ -1,7 +1,7 @@
 #include "resource.h"
 
 Resources::Resources()
-{
+{	
 	IwSoundInit();
 	IwResManagerInit();
 	
@@ -55,15 +55,21 @@ Resources::Resources()
 	ok = Iw2DCreateImageResource("ok");
 	ranks = Iw2DCreateImageResource("ranks");
 	power_level = Iw2DCreateImageResource("power_level");
+	star_rank = Iw2DCreateImageResource("star_rank");
+	about = Iw2DCreateImageResource("about");
 
 	if(Iw2DGetSurfaceHeight()>=720)
 	{
 		font = Iw2DCreateFontResource("manteka26_white");
 	}
-	else
+	else if(Iw2DGetSurfaceHeight()>=400)
 	{
 		font = Iw2DCreateFontResource("manteka12_white");
-	}	
+	}
+	else
+	{
+		font = Iw2DCreateFontResource("manteka8_white");
+	}
 }
 
 Resources::~Resources()
@@ -107,6 +113,8 @@ Resources::~Resources()
 	delete ok;
 	delete ranks;
 	delete power_level;
+	delete star_rank;
+	delete about;
 
 	delete font;
 

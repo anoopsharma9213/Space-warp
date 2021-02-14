@@ -29,6 +29,17 @@ int main()
     //Initialise graphics system(s)
     Iw2DInit();
 
+	CIw2DImage *ss = Iw2DCreateImage("Splash/splashscreen.png");
+	Iw2DSurfaceClear(0xff00ff00);
+	Iw2DSetColour(0xffffffff);
+	Iw2DDrawImage(ss,CIwFVec2(0,0),CIwFVec2((float)Iw2DGetSurfaceWidth(),(float)Iw2DGetSurfaceHeight()));
+	Iw2DSurfaceShow();
+	if(s3eDeviceGetInt(S3E_DEVICE_OS)==S3E_OS_ID_WP8)
+	{
+		Iw2DSurfaceShow();
+	}
+	
+
     getresource = new Resources();
 	newgame = new gamePlay();
 	s3eDeviceRegister(S3E_DEVICE_PAUSE,(s3eCallback)device_pause,0);
@@ -39,7 +50,8 @@ int main()
     // to exit correctly, applications should poll for quit requests
     while(!s3eDeviceCheckQuitRequest())
     {
-        // run logic at a fixed frame rate (defined by UPS)
+
+		// run logic at a fixed frame rate (defined by UPS)
 
         // block until the next frame (don't render unless at
         // least one update has occurred)
@@ -74,6 +86,7 @@ int main()
     }
 	delete getresource;
 	delete newgame;
+	delete ss;
     Iw2DTerminate();
     
     // Return

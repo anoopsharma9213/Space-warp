@@ -2,9 +2,7 @@ CIwResGroup
 {
 	name Iw2DStrings
 	
-	"font/viner26_white.gxfont"
-	"font/segoe26_white.gxfont"
-	"font/segoe12_white.gxfont"
 	"font/manteka26_white.gxfont"
 	"font/manteka12_white.gxfont"
+	"font/manteka8_white.gxfont"
 }

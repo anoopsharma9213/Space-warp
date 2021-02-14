@@ -14,9 +14,13 @@ CIwResGroup
 	"design/ok.png"
 	"design/power_level.png"
 	"design/ranks.png"
+	"design/star_rank.png"
+	"design/about.png"
 
 	"effects/explosion.wav"
 	"effects/star.wav"
+	"effects/fuel.wav"
+	"effects/power.wav"
 
 	CIwSoundSpec
 	{
@@ -30,6 +34,22 @@ CIwResGroup
 	{
 		name		"star"		# The name we want to use to refer to this sound effect in out code
 		data		"star"		# The WAv file name (without .wav
+		vol 		0.5			# Default volume to be played at
+		loop		false		# Do we want this sound effect to play forever?
+	}
+
+	CIwSoundSpec
+	{
+		name		"fuel"		# The name we want to use to refer to this sound effect in out code
+		data		"fuel"		# The WAv file name (without .wav
+		vol 		0.5			# Default volume to be played at
+		loop		false		# Do we want this sound effect to play forever?
+	}
+
+	CIwSoundSpec
+	{
+		name		"power"		# The name we want to use to refer to this sound effect in out code
+		data		"power"		# The WAv file name (without .wav
 		vol 		0.5			# Default volume to be played at
 		loop		false		# Do we want this sound effect to play forever?
 	}

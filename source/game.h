@@ -10,9 +10,9 @@ private:
 
 	struct save
 	{
-		float star,score;
+		float star,score,cstar;
 		int m, sc, mw;
-		int sc_l[6];
+		int sc_l[6], pt[4];
 	}*_store;
 
 	char str[50];
@@ -60,16 +60,21 @@ private:
 	//------Interface---------------
 
 	int music, energy;
-	CIwFVec2 energy_size, energy_pos;
-	CIwFVec2 panel_size, panel_pos, continue_pos, home_pos, sound_pos, button_size;
+	CIwFVec2 energy_size, energy_pos, about_info_pos;
+	bool isslide;
+	float slide_add;
+	int slide;
+	CIwFVec2 panel_size, panel_pos, continue_pos, home_pos, sound_pos, soundm_pos, button_size;
 	CIwSoundSpec* Explosion_sound;
 	CIwSoundSpec* Star_sound;
+	CIwSoundSpec* Fuel_sound;
+	CIwSoundSpec* Power_sound;
 	CIwFVec2 spacecraft_set_pos[6], spacecraft_set_size;
 	CIwFVec2 spacecraft_tick_size;
 
 	//------Collectibles------------
-	float star, score, lives, max_lives[6];
-	float high_score, total_star;
+	float star, score, lives, max_lives[6], max_speed[6];
+	float high_score, total_star, collected_star;
 	CIwFVec2 star_pos, star_size, score_pos, score_size, lives_pos, lives_size;
 
 	//------Powerups and resources----
@@ -82,6 +87,7 @@ private:
 
 	//--------Powerups timer----------
 	int power_time[4], power_down;
+	int achievement[10];
 
 public:
 

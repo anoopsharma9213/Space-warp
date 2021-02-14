@@ -28,12 +28,28 @@ deployment
 	version="1.0.0"
 	name="Space Warp"
 	caption="Space Warp"
+	icon = "icon"
+}
+
+includepaths
+{
+	icon
 }
 
 assets
 {
 	(data)
 		sound
+		Splash
+
+	(Splash)
+		splashscreen3.jpg
+	
+	(icon)
+		icon1.png
+		icon2.png
+		icon3.png
+		icon4.png
 
 	(data-ram/data-gles1, data)
 		resource.group.bin

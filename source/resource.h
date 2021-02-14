@@ -50,6 +50,8 @@ private:
 	CIw2DImage *ok;
 	CIw2DImage *power_level;
 	CIw2DImage *ranks;
+	CIw2DImage *star_rank;
+	CIw2DImage *about;
 
 public:
 
@@ -87,6 +89,8 @@ public:
 	CIw2DImage *get_ok()				{return ok;}
 	CIw2DImage *get_ranks()				{return ranks;}
 	CIw2DImage *get_power_level()		{return power_level;}
+	CIw2DImage *get_star_rank()			{return star_rank;}
+	CIw2DImage *get_about()				{return about;}
 
 	CIw2DFont *get_font()				{return font;}
 

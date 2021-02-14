@@ -11,9 +11,14 @@ void gamePlay::Update()
 			_store->m = music;
 			_store->mw = megawarp;
 			_store->sc = sc_sel;
+			_store->cstar = collected_star;
 			for (int i = 0; i < 6; i++)
 			{
 				_store->sc_l[i] = sc_locked[i];
+			}
+			for (int i = 0; i < 4; i++)
+			{
+				_store->pt[i] = power_time[i];
 			}
 
 			s3eSecureStoragePut(_store,sizeof(struct save));
@@ -95,7 +100,6 @@ void gamePlay::Render()
 		case -3:  draw_about_page();
 			break;
 	}
-
 	Iw2DSurfaceShow();
 }
 
@@ -131,15 +135,21 @@ gamePlay::gamePlay()
 		music = _store->m;
 		sc_sel = _store->sc;
 		megawarp = _store->mw;
+		collected_star = _store->cstar;
 		for (int i = 0; i < 6; i++)
 		{
 			sc_locked[i] = _store->sc_l[i];
 		}
+		for (int i = 0; i < 4; i++)
+		{
+			power_time[i] = _store->pt[i];
+		}
 	}
 	else
 	{
-		high_score = 0;
-		total_star = 10000000;
+		high_score = 100000;
+		total_star = 100000;
+		collected_star = 100000;
 		music = 2;
 		sc_sel = 0;
 		megawarp = 1;
@@ -148,11 +158,11 @@ gamePlay::gamePlay()
 		{
 			sc_locked[i] = 1;
 		}
+		power_time[0] = 10;
+		power_time[2] = power_time[1] = 5;
+		power_time[3] = 50;
+		page = -3;
 	}
-
-	power_time[0] = 10;
-	power_time[2] = power_time[1] = 6;
-	power_time[3] = 30;
 
 	max_lives[0] = 2;
 	max_lives[1] = 3;
@@ -161,7 +171,7 @@ gamePlay::gamePlay()
 	max_lives[4] = 2;
 	max_lives[5] = 5;
 	
-	s3eAudioPlay("sound/bg.mp3",1);
+	s3eAudioPlay("sound/bg.mp3",0);
 
 	if(music != 2)
 	{
@@ -173,26 +183,50 @@ gamePlay::gamePlay()
 	}
 	Explosion_sound = (CIwSoundSpec*)getresource->Effects->GetResNamed("explosion", IW_SOUND_RESTYPE_SPEC);
 	Star_sound = (CIwSoundSpec*)getresource->Effects->GetResNamed("star", IW_SOUND_RESTYPE_SPEC);
+	Fuel_sound = (CIwSoundSpec*)getresource->Effects->GetResNamed("fuel", IW_SOUND_RESTYPE_SPEC);
+	Power_sound = (CIwSoundSpec*)getresource->Effects->GetResNamed("power", IW_SOUND_RESTYPE_SPEC);
 
 	if(Iw2DGetSurfaceHeight()>=1080)
 	{
-		g_speed = 9;
+		max_speed[0] = 8;
+		max_speed[1] = 8;
+		max_speed[2] = 10;
+		max_speed[3] = 8;
+		max_speed[4] = 12;
+		max_speed[5] = 12;
 	}
 	else if(Iw2DGetSurfaceHeight()>=720)
 	{
-		g_speed = 5;
+		max_speed[0] = 5;
+		max_speed[1] = 5;
+		max_speed[2] = 7;
+		max_speed[3] = 5;
+		max_speed[4] = 9;
+		max_speed[5] = 9;
 	}
 	else if (Iw2DGetSurfaceHeight()>=400)
 	{
-		g_speed = 3;
+		max_speed[0] = 2;
+		max_speed[1] = 2;
+		max_speed[2] = 4;
+		max_speed[3] = 2;
+		max_speed[4] = 6;
+		max_speed[5] = 6;
 	}
 	else
 	{
-		g_speed = 2;
+		max_speed[0] = 1;
+		max_speed[1] = 1;
+		max_speed[2] = 3;
+		max_speed[3] = 1;
+		max_speed[4] = 5;
+		max_speed[5] = 5;
 	}
-
+	g_speed = max_speed[sc_sel];
 	l_speed = g_speed;
 	delay = 0;
+	slide = 0;
+	slide_add = 0;
 
 	Iw2DSetFont(getresource->get_font());
 	font_size = (float)(getresource->get_font()->GetHeight());
@@ -285,11 +319,11 @@ void gamePlay::ini_Environment()
 	main_panel_pos.y = Iw2DGetSurfaceHeight()*0.50f-main_panel_size.y/2;
 
 	button_size.x = button_size.y = Iw2DGetSurfaceHeight()*0.17f;
-	sound_pos.y = home_pos.y = continue_pos.y = Iw2DGetSurfaceHeight()*0.50f - button_size.y/2;
+	soundm_pos.y = home_pos.y = continue_pos.y = Iw2DGetSurfaceHeight()*0.50f - button_size.y/2;
 
 	continue_pos.x = Iw2DGetSurfaceWidth()*0.50f - button_size.x/2;
 	home_pos.x = (Iw2DGetSurfaceWidth()*0.50f+Iw2DGetSurfaceWidth()*0.15f)/2 - button_size.x/2;
-	sound_pos.x = (Iw2DGetSurfaceWidth()*0.85f+Iw2DGetSurfaceWidth()*0.50f)/2 - button_size.x/2;
+	soundm_pos.x = (Iw2DGetSurfaceWidth()*0.85f+Iw2DGetSurfaceWidth()*0.50f)/2 - button_size.x/2;
 
 	spacecraft_set_size.y = spacecraft_set_size.x = Iw2DGetSurfaceWidth()*0.17f;
 	spacecraft_set_pos[3].x = spacecraft_set_pos[0].x = Iw2DGetSurfaceWidth()*.10f;
@@ -299,6 +333,9 @@ void gamePlay::ini_Environment()
 	spacecraft_set_pos[2].y = spacecraft_set_pos[1].y = spacecraft_set_pos[0].y = Iw2DGetSurfaceHeight()*0.10f;
 	spacecraft_set_pos[5].y = spacecraft_set_pos[4].y = spacecraft_set_pos[3].y = Iw2DGetSurfaceHeight()*0.80f-spacecraft_set_size.y;
 	spacecraft_tick_size.x = spacecraft_tick_size.y = Iw2DGetSurfaceWidth()*0.04f;
+
+	about_info_pos.x = 0;
+	about_info_pos.y = Iw2DGetSurfaceHeight()*0.05f;
 }
 
 void gamePlay::update_Environment()
@@ -795,15 +832,15 @@ void gamePlay::draw_pause_page()
 	Iw2DDrawImage(getresource->get_resume(),continue_pos,button_size);
 	if(music == 0)
 	{
-		Iw2DDrawImageRegion(getresource->get_sound_key(),sound_pos,button_size,CIwFVec2(200,0),CIwFVec2(100,98));
+		Iw2DDrawImageRegion(getresource->get_sound_key(),soundm_pos,button_size,CIwFVec2(200,0),CIwFVec2(100,98));
 	}
 	else if(music == 1)
 	{
-		Iw2DDrawImageRegion(getresource->get_sound_key(),sound_pos,button_size,CIwFVec2(0,0),CIwFVec2(100,98));
+		Iw2DDrawImageRegion(getresource->get_sound_key(),soundm_pos,button_size,CIwFVec2(0,0),CIwFVec2(100,98));
 	}
 	else
 	{
-		Iw2DDrawImageRegion(getresource->get_sound_key(),sound_pos,button_size,CIwFVec2(100,0),CIwFVec2(100,98));
+		Iw2DDrawImageRegion(getresource->get_sound_key(),soundm_pos,button_size,CIwFVec2(100,0),CIwFVec2(100,98));
 	}
 }
 
@@ -830,8 +867,8 @@ void gamePlay::update_pause_page()
 		{
 			page = 1;
 		}
-		else if(s3ePointerGetX() >= sound_pos.x && s3ePointerGetX() <= sound_pos.x+button_size.x &&
-			s3ePointerGetY() >= sound_pos.y && s3ePointerGetY() <= sound_pos.y+button_size.y)
+		else if(s3ePointerGetX() >= soundm_pos.x && s3ePointerGetX() <= soundm_pos.x+button_size.x &&
+			s3ePointerGetY() >= soundm_pos.y && s3ePointerGetY() <= soundm_pos.y+button_size.y)
 		{
 			if(music == 0 && delay == 0)
 			{
@@ -870,28 +907,58 @@ void gamePlay::update_about_page()
 		page = 0;
 		s3eKeyboardClearState();
 	}
+	if( (s3ePointerGetState(S3E_POINTER_BUTTON_SELECT) & S3E_POINTER_STATE_DOWN))
+	{
+		if(s3ePointerGetX()>=Iw2DGetSurfaceHeight()*0.10f && s3ePointerGetX()<=Iw2DGetSurfaceHeight()*0.10f+button_size.x &&
+			s3ePointerGetY()>=Iw2DGetSurfaceHeight()*0.10f && s3ePointerGetY()<=Iw2DGetSurfaceHeight()*0.10f+button_size.y)
+		{
+			page = 0;
+			delay = 30;
+		}
+		if(isslide == false)
+		{
+			isslide = true;
+			slide_add = (float)s3ePointerGetY();
+		}
+		else
+		{
+			if(slide_add < s3ePointerGetY())
+			{
+				slide_add = (float)s3ePointerGetY();
+				if(slide>0)
+				{
+					slide -= (int)max_speed[0]*8;
+					if(slide<0)
+					{
+						slide = 0;
+					}
+				}
+			}
+			else if(slide_add > s3ePointerGetY())
+			{
+				slide_add = (float)s3ePointerGetY();
+				if(slide < 840)
+				{
+					slide += (int)max_speed[0]*8;
+					if(slide>840)
+					{
+						slide = 840;
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		isslide = false;
+	}
 }
 
 void gamePlay::draw_about_page()
 {
 	Iw2DDrawImage(getresource->get_panel(),main_panel_pos,main_panel_size);
-	Iw2DDrawString("About",CIwFVec2(0,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2((float)Iw2DGetSurfaceWidth(),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
-	Iw2DFillRect(CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.10f+0.99f*font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.80f,5));
-	Iw2DDrawString("Game screen is horizontally divided in TWO HALVES",CIwFVec2(0,Iw2DGetSurfaceHeight()*0.10f+font_size),CIwFVec2((float)Iw2DGetSurfaceWidth(),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
-	Iw2DDrawString("Touch UPPER HALF to move plane UPWARDS",CIwFVec2(0,Iw2DGetSurfaceHeight()*0.10f+2*font_size),CIwFVec2((float)Iw2DGetSurfaceWidth(),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
-	Iw2DDrawString("Touch LOWER HALF to move plane DOWNWARDS",CIwFVec2(0,Iw2DGetSurfaceHeight()*0.10f+3*font_size),CIwFVec2((float)Iw2DGetSurfaceWidth(),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
-	Iw2DFillRect(CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.10f+0.99f*(3*font_size)),CIwFVec2(Iw2DGetSurfaceWidth()*0.80f,5));
-	Iw2DDrawString("Power-Ups",CIwFVec2(0,Iw2DGetSurfaceHeight()*0.10f+4*font_size),CIwFVec2((float)Iw2DGetSurfaceWidth(),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
-	Iw2DDrawString("",CIwFVec2(0,Iw2DGetSurfaceHeight()*0.10f+7*font_size),CIwFVec2((float)Iw2DGetSurfaceWidth(),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
-	/*Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.30f,main_panel_pos.y+Iw2DGetSurfaceHeight()*0.10f+font_size),CIwFVec2(font_size,font_size),CIwFVec2(0,0),CIwFVec2(50,50));
-	Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.30f,main_panel_pos.y+Iw2DGetSurfaceHeight()*0.10f+2*font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,0),CIwFVec2(50,50));
-	Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.30f,main_panel_pos.y+Iw2DGetSurfaceHeight()*0.10f+3*font_size),CIwFVec2(font_size,font_size),CIwFVec2(100,0),CIwFVec2(50,50));
-	Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.30f,main_panel_pos.y+Iw2DGetSurfaceHeight()*0.10f+4*font_size),CIwFVec2(font_size,font_size),CIwFVec2(150,0),CIwFVec2(50,50));
-	Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.30f,main_panel_pos.y+Iw2DGetSurfaceHeight()*0.10f+5*font_size),CIwFVec2(font_size,font_size),CIwFVec2(0,50),CIwFVec2(50,50));
-	Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.30f,main_panel_pos.y+Iw2DGetSurfaceHeight()*0.10f+6*font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
-	Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.30f,main_panel_pos.y+Iw2DGetSurfaceHeight()*0.10f+7*font_size),CIwFVec2(font_size,font_size),CIwFVec2(100,50),CIwFVec2(50,50));
-	Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.30f,main_panel_pos.y+Iw2DGetSurfaceHeight()*0.10f+8*font_size),CIwFVec2(font_size,font_size),CIwFVec2(150,50),CIwFVec2(50,50));
-	*/
+	Iw2DDrawImageRegion(getresource->get_about(),about_info_pos,CIwFVec2((float)Iw2DGetSurfaceWidth(),Iw2DGetSurfaceHeight()*0.85f),CIwFVec2(0,(float)slide+50),CIwFVec2(1280,660));
+	Iw2DDrawImage(getresource->get_resume(),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),button_size);
 }
 
 //-------------------------------------------PERSONALIZE PAGE-------------------------------------------
@@ -938,6 +1005,25 @@ void gamePlay::update_personalize_page()
 		sc_pos.x = Iw2DGetSurfaceWidth()*0.5f - sc_size.x*0.5f;
 		sc_pos.y = Iw2DGetSurfaceHeight()*0.5f - sc_size.y*0.5f;
 		lives = max_lives[sc_sel];
+		l_speed = g_speed = max_speed[sc_sel];
+
+		_store->score = high_score;
+		_store->star = total_star;
+		_store->m = music;
+		_store->mw = megawarp;
+		_store->sc = sc_sel;
+		_store->cstar = collected_star;
+		for (int i = 0; i < 6; i++)
+		{
+			_store->sc_l[i] = sc_locked[i];
+		}
+		for (int i = 0; i < 4; i++)
+		{
+			_store->pt[i] = power_time[i];
+		}
+
+		s3eSecureStoragePut(_store,sizeof(struct save));
+
 		s3eKeyboardClearState();
 	}
 	switch (subpage)
@@ -963,8 +1049,8 @@ void gamePlay::update_personalize_page()
 						delay = 30;
 					}
 				}
-				else if(s3ePointerGetX() >= sound_pos.x && s3ePointerGetX() <= sound_pos.x+button_size.x &&
-					s3ePointerGetY() >= sound_pos.y && s3ePointerGetY() <= sound_pos.y+button_size.y)
+				else if(s3ePointerGetX() >= soundm_pos.x && s3ePointerGetX() <= soundm_pos.x+button_size.x &&
+					s3ePointerGetY() >= soundm_pos.y && s3ePointerGetY() <= soundm_pos.y+button_size.y)
 				{
 					if (delay == 0)
 					{
@@ -992,6 +1078,7 @@ void gamePlay::update_personalize_page()
 										total_star-=5000;
 										sc_locked[i] = 0;
 										sc_sel = i;
+										CIwSoundInst* SoundInstance = Power_sound->Play();
 									}
 									break;
 								case 2:
@@ -1000,6 +1087,7 @@ void gamePlay::update_personalize_page()
 										total_star-=10000;
 										sc_locked[i] = 0;
 										sc_sel = i;
+										CIwSoundInst* SoundInstance = Power_sound->Play();
 									}
 									break;
 								case 3:
@@ -1008,6 +1096,7 @@ void gamePlay::update_personalize_page()
 										total_star-=20000;
 										sc_locked[i] = 0;
 										sc_sel = i;
+										CIwSoundInst* SoundInstance = Power_sound->Play();
 									}
 									break;
 								case 4:
@@ -1016,6 +1105,7 @@ void gamePlay::update_personalize_page()
 										total_star-=30000;
 										sc_locked[i] = 0;
 										sc_sel = i;
+										CIwSoundInst* SoundInstance = Power_sound->Play();
 									}
 									break;
 								case 5:
@@ -1024,6 +1114,7 @@ void gamePlay::update_personalize_page()
 										total_star-=50000;
 										sc_locked[i] = 0;
 										sc_sel = i;
+										CIwSoundInst* SoundInstance = Power_sound->Play();
 									}
 									break;
 							}
@@ -1031,14 +1122,165 @@ void gamePlay::update_personalize_page()
 						else if(sc_locked[i] == 0 && sc_sel != i)
 						{
 							sc_sel = i;
+							CIwSoundInst* SoundInstance = Star_sound->Play();
 						}
 					}
 				}
 			}
 			break;
 		case 2:
-			break;
-		case 3:
+			if( (s3ePointerGetState(S3E_POINTER_BUTTON_SELECT) & S3E_POINTER_STATE_DOWN))
+			{
+				if(s3ePointerGetX() >= 2*Iw2DGetSurfaceWidth()*0.11f && s3ePointerGetX() <= 2*Iw2DGetSurfaceWidth()*0.11f+Iw2DGetStringWidth("UPGRADE 100000") &&
+						s3ePointerGetY() >= Iw2DGetSurfaceHeight()*0.19f+Iw2DGetSurfaceHeight()*0.12f+font_size && s3ePointerGetY() <= Iw2DGetSurfaceHeight()*0.19f+Iw2DGetSurfaceHeight()*0.12f+2*font_size)
+				{
+					if(delay == 0)
+					{
+						switch (power_time[0])
+						{
+							case 10:
+								if(total_star >=1000)
+								{
+									total_star-=1000;
+									delay = 30;
+									CIwSoundInst* SoundInstance = Star_sound->Play();
+									power_time[0] = 15;
+								}
+								break;
+							case 15:
+								if(total_star >=2500)
+								{
+									total_star-=2500;
+									delay = 30;
+									CIwSoundInst* SoundInstance = Star_sound->Play();
+									power_time[0] = 20;
+								}
+								break;
+							case 20:
+								if(total_star >=5000)
+								{
+									total_star-=5000;
+									delay = 30;
+									CIwSoundInst* SoundInstance = Star_sound->Play();
+									power_time[0] = 25;
+								}
+								break;
+							case 25:
+								if(total_star >=10000)
+								{
+									total_star-=10000;
+									delay = 30;
+									CIwSoundInst* SoundInstance = Star_sound->Play();
+									power_time[0] = 30;
+								}
+								break;
+						}
+					}
+				}
+				else if(s3ePointerGetX() >= Iw2DGetSurfaceWidth()*0.55f+Iw2DGetSurfaceWidth()*0.12f && s3ePointerGetX() <= Iw2DGetSurfaceWidth()*0.55f+Iw2DGetSurfaceWidth()*0.12f+Iw2DGetStringWidth("UPGRADE 100000") &&
+						s3ePointerGetY() >= Iw2DGetSurfaceHeight()*0.19f+Iw2DGetSurfaceHeight()*0.12f+font_size && s3ePointerGetY() <= Iw2DGetSurfaceHeight()*0.19f+Iw2DGetSurfaceHeight()*0.12f+2*font_size)
+				{
+					if(delay == 0)
+					{
+						switch (power_time[1])
+						{
+							case 5:
+								if(total_star >=1000)
+								{
+									total_star-=1000;
+									delay = 30;
+									CIwSoundInst* SoundInstance = Star_sound->Play();
+									power_time[1] = 10;
+								}
+								break;
+							case 10:
+								if(total_star >=2500)
+								{
+									total_star-=2500;
+									delay = 30;
+									CIwSoundInst* SoundInstance = Star_sound->Play();
+									power_time[1] = 15;
+								}
+								break;
+							case 15:
+								if(total_star >=5000)
+								{
+									total_star-=5000;
+									delay = 30;
+									CIwSoundInst* SoundInstance = Star_sound->Play();
+									power_time[1] = 20;
+								}
+								break;
+							case 20:
+								if(total_star >=10000)
+								{
+									total_star-=10000;
+									delay = 30;
+									CIwSoundInst* SoundInstance = Star_sound->Play();
+									power_time[1] = 25;
+								}
+								break;
+						}
+					}
+				}
+				else if(s3ePointerGetX() >= 2*Iw2DGetSurfaceWidth()*0.11f && s3ePointerGetX() <= 2*Iw2DGetSurfaceWidth()*0.11f+Iw2DGetStringWidth("UPGRADE 100000") &&
+						s3ePointerGetY() >= Iw2DGetSurfaceHeight()*0.54f+Iw2DGetSurfaceHeight()*0.12f+font_size && s3ePointerGetY() <= Iw2DGetSurfaceHeight()*0.54f+Iw2DGetSurfaceHeight()*0.12f+2*font_size)
+				{
+					if(delay == 0)
+					{
+						switch (power_time[2])
+						{
+							case 5:
+								if(total_star >=1000)
+								{
+									total_star-=1000;
+									delay = 30;
+									CIwSoundInst* SoundInstance = Star_sound->Play();
+									power_time[2] = 10;
+								}
+								break;
+							case 10:
+								if(total_star >=2500)
+								{
+									total_star-=2500;
+									delay = 30;
+									CIwSoundInst* SoundInstance = Star_sound->Play();
+									power_time[2] = 15;
+								}
+								break;
+							case 15:
+								if(total_star >=5000)
+								{
+									total_star-=5000;
+									delay = 30;
+									CIwSoundInst* SoundInstance = Star_sound->Play();
+									power_time[2] = 20;
+								}
+								break;
+							case 20:
+								if(total_star >=10000)
+								{
+									total_star-=10000;
+									delay = 30;
+									CIwSoundInst* SoundInstance = Star_sound->Play();
+									power_time[2] = 25;
+								}
+								break;
+						}
+					}
+				}
+				else if(s3ePointerGetX() >= Iw2DGetSurfaceWidth()*0.58f && s3ePointerGetX() <= Iw2DGetSurfaceWidth()*0.58f+Iw2DGetStringWidth("UPGRADE 100000") &&
+						s3ePointerGetY() >= Iw2DGetSurfaceHeight()*0.54f+Iw2DGetSurfaceHeight()*0.12f+font_size && s3ePointerGetY() <= Iw2DGetSurfaceHeight()*0.54f+Iw2DGetSurfaceHeight()*0.12f+2*font_size)
+				{
+					if(delay == 0 && total_star>=1000)
+					{
+						megawarp++;
+						total_star -= 1000;
+						CIwSoundInst* SoundInstance = Star_sound->Play();
+						delay = 30;
+					}
+				}
+			}
 			break;
 	}
 }
@@ -1050,17 +1292,17 @@ void gamePlay::draw_personalize_page()
 		//Iw2DDrawImage(getresource->get_panel(),panel_pos,panel_size);
 		Iw2DDrawImageRegion(getresource->get_menu(),home_pos,button_size,CIwFVec2(0,0),CIwFVec2(100,100));
 		Iw2DDrawImageRegion(getresource->get_menu(),continue_pos,button_size,CIwFVec2(100,0),CIwFVec2(100,100));
-		Iw2DDrawImageRegion(getresource->get_menu(),sound_pos,button_size,CIwFVec2(200,0),CIwFVec2(100,100));
+		Iw2DDrawImageRegion(getresource->get_menu(),soundm_pos,button_size,CIwFVec2(200,0),CIwFVec2(100,100));
 	}
 	else if (subpage == 1)
 	{
 		Iw2DDrawImage(getresource->get_panel(),main_panel_pos,main_panel_size);
 		for (int i = 0; i < 6; i++)
 		{
-			Iw2DDrawImageRegion(getresource->get_spacecraft_set(),spacecraft_set_pos[i],spacecraft_set_size,CIwFVec2(i<3?i*200:(i-3)*200,i<3?0:200),CIwFVec2(200,200));
+			Iw2DDrawImageRegion(getresource->get_spacecraft_set(),spacecraft_set_pos[i],spacecraft_set_size,CIwFVec2((float)(i<3?i*200:(i-3)*200),(float)(i<3?0:200)),CIwFVec2(200,200));
 			if(sc_locked[i]==1)
 			{
-				Iw2DDrawImageRegion(getresource->get_spacecraft_locked(),spacecraft_set_pos[i],spacecraft_set_size,CIwFVec2((i-1)*200,0),CIwFVec2(200,200));
+				Iw2DDrawImageRegion(getresource->get_spacecraft_locked(),spacecraft_set_pos[i],spacecraft_set_size,CIwFVec2((float)(i-1)*200,0),CIwFVec2(200,200));
 			}
 		}
 		Iw2DDrawImageRegion(getresource->get_ok(),spacecraft_set_pos[sc_sel],spacecraft_tick_size,CIwFVec2(0,0),CIwFVec2(25,25));
@@ -1068,11 +1310,221 @@ void gamePlay::draw_personalize_page()
 	else if(subpage == 2)
 	{
 		Iw2DDrawImage(getresource->get_panel(),main_panel_pos,main_panel_size);
+		CIwFVec2 size = CIwFVec2(Iw2DGetSurfaceHeight()*0.12f,Iw2DGetSurfaceHeight()*0.12f);
 
-		Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.25f-Iw2DGetSurfaceHeight()*0.15f/2,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(Iw2DGetSurfaceHeight()*0.15f,Iw2DGetSurfaceHeight()*0.15f),CIwFVec2(0,0),CIwFVec2(50,50));
-		Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.25f-Iw2DGetSurfaceHeight()*0.15f/2,Iw2DGetSurfaceHeight()*0.30f),CIwFVec2(Iw2DGetSurfaceHeight()*0.15f,Iw2DGetSurfaceHeight()*0.15f),CIwFVec2(50,0),CIwFVec2(50,50));
-		Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.25f-Iw2DGetSurfaceHeight()*0.15f/2,Iw2DGetSurfaceHeight()*0.50f),CIwFVec2(Iw2DGetSurfaceHeight()*0.15f,Iw2DGetSurfaceHeight()*0.15f),CIwFVec2(100,0),CIwFVec2(50,50));
-		Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.25f-Iw2DGetSurfaceHeight()*0.15f/2,Iw2DGetSurfaceHeight()*0.70f),CIwFVec2(Iw2DGetSurfaceHeight()*0.15f,Iw2DGetSurfaceHeight()*0.15f),CIwFVec2(150,0),CIwFVec2(50,50));
+		Iw2DDrawString("WARP",CIwFVec2(0,Iw2DGetSurfaceHeight()*0.15f+size.y/2-font_size/2),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+		Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.15f),size,CIwFVec2(0,0),CIwFVec2(50,50));
+		Iw2DDrawString("Cover Longer Distance",CIwFVec2(0,Iw2DGetSurfaceHeight()*0.17f+size.y),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+		switch (power_time[0])
+		{
+			case 10:
+				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.20f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,0),CIwFVec2(60,18));
+				Iw2DDrawString("UPGRADE 1000",CIwFVec2(2*Iw2DGetSurfaceWidth()*0.11f,Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(2*Iw2DGetSurfaceWidth()*0.115f+Iw2DGetStringWidth("UPGRADE 1000"),Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
+				break;
+			case 15:
+				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.20f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,18),CIwFVec2(60,18));
+				Iw2DDrawString("UPGRADE 2500",CIwFVec2(2*Iw2DGetSurfaceWidth()*0.11f,Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(2*Iw2DGetSurfaceWidth()*0.115f+Iw2DGetStringWidth("UPGRADE 2500"),Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
+				break;
+			case 20:
+				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.20f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,36),CIwFVec2(60,18));
+				Iw2DDrawString("UPGRADE 5000",CIwFVec2(2*Iw2DGetSurfaceWidth()*0.11f,Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(2*Iw2DGetSurfaceWidth()*0.115f+Iw2DGetStringWidth("UPGRADE 5000"),Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
+				break;
+			case 25:
+				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.20f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,54),CIwFVec2(60,18));
+				Iw2DDrawString("UPGRADE 10000",CIwFVec2(2*Iw2DGetSurfaceWidth()*0.11f,Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(2*Iw2DGetSurfaceWidth()*0.115f+Iw2DGetStringWidth("UPGRADE 10000"),Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
+				break;
+			case 30:
+				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.20f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,72),CIwFVec2(60,18));
+				Iw2DDrawString("MAX LEVEL",CIwFVec2(2*Iw2DGetSurfaceWidth()*0.11f,Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				break;
+		}
+
+		Iw2DDrawString("ENCHANTER",CIwFVec2(Iw2DGetSurfaceWidth()*0.45f,Iw2DGetSurfaceHeight()*0.15f+size.y/2-font_size/2),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+		Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.55f,Iw2DGetSurfaceHeight()*0.15f),size,CIwFVec2(50,0),CIwFVec2(50,50));
+		Iw2DDrawString("Magically Attract Stars",CIwFVec2(Iw2DGetSurfaceWidth()*0.45f,Iw2DGetSurfaceHeight()*0.17f+size.y),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+		switch (power_time[1])
+		{
+			case 5:
+				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.55f,Iw2DGetSurfaceHeight()*0.20f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,0),CIwFVec2(60,18));
+				Iw2DDrawString("UPGRADE 1000",CIwFVec2(Iw2DGetSurfaceWidth()*0.55f+Iw2DGetSurfaceWidth()*0.12f,Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.55f+Iw2DGetSurfaceWidth()*0.13f+Iw2DGetStringWidth("UPGRADE 1000"),Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
+				break;
+			case 10:
+				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.55f,Iw2DGetSurfaceHeight()*0.20f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,18),CIwFVec2(60,18));
+				Iw2DDrawString("UPGRADE 2500",CIwFVec2(Iw2DGetSurfaceWidth()*0.55f+Iw2DGetSurfaceWidth()*0.12f,Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.55f+Iw2DGetSurfaceWidth()*0.13f+Iw2DGetStringWidth("UPGRADE 2500"),Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
+				break;
+			case 15:
+				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.55f,Iw2DGetSurfaceHeight()*0.20f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,36),CIwFVec2(60,18));
+				Iw2DDrawString("UPGRADE 5000",CIwFVec2(Iw2DGetSurfaceWidth()*0.55f+Iw2DGetSurfaceWidth()*0.12f,Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.55f+Iw2DGetSurfaceWidth()*0.13f+Iw2DGetStringWidth("UPGRADE 5000"),Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
+				break;
+			case 20:
+				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.55f,Iw2DGetSurfaceHeight()*0.20f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,54),CIwFVec2(60,18));
+				Iw2DDrawString("UPGRADE 10000",CIwFVec2(Iw2DGetSurfaceWidth()*0.55f+Iw2DGetSurfaceWidth()*0.12f,Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.55f+Iw2DGetSurfaceWidth()*0.13f+Iw2DGetStringWidth("UPGRADE 10000"),Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
+				break;
+			case 25:
+				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.55f,Iw2DGetSurfaceHeight()*0.20f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,72),CIwFVec2(60,18));
+				Iw2DDrawString("MAX LEVEL",CIwFVec2(Iw2DGetSurfaceWidth()*0.55f+Iw2DGetSurfaceWidth()*0.12f,Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				break;
+		}
+
+		Iw2DDrawString("IMMORTAL",CIwFVec2(0,Iw2DGetSurfaceHeight()*0.50f+size.y/2-font_size/2),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+		Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.50f),size,CIwFVec2(100,0),CIwFVec2(50,50));
+		Iw2DDrawString("Pass Through Objects",CIwFVec2(0,Iw2DGetSurfaceHeight()*0.52f+size.y),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+		switch (power_time[2])
+		{
+			case 5:
+				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.55f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,0),CIwFVec2(60,18));
+				Iw2DDrawString("UPGRADE 1000",CIwFVec2(2*Iw2DGetSurfaceWidth()*0.11f,Iw2DGetSurfaceHeight()*0.54f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(2*Iw2DGetSurfaceWidth()*0.115f+Iw2DGetStringWidth("UPGRADE 1000"),Iw2DGetSurfaceHeight()*0.54f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
+				break;
+			case 10:
+				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.55f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,18),CIwFVec2(60,18));
+				Iw2DDrawString("UPGRADE 2500",CIwFVec2(2*Iw2DGetSurfaceWidth()*0.11f,Iw2DGetSurfaceHeight()*0.54f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(2*Iw2DGetSurfaceWidth()*0.115f+Iw2DGetStringWidth("UPGRADE 2500"),Iw2DGetSurfaceHeight()*0.54f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
+				break;
+			case 15:
+				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.55f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,36),CIwFVec2(60,18));
+				Iw2DDrawString("UPGRADE 5000",CIwFVec2(2*Iw2DGetSurfaceWidth()*0.11f,Iw2DGetSurfaceHeight()*0.54f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(2*Iw2DGetSurfaceWidth()*0.115f+Iw2DGetStringWidth("UPGRADE 5000"),Iw2DGetSurfaceHeight()*0.54f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
+				break;
+			case 20:
+				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.55f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,54),CIwFVec2(60,18));
+				Iw2DDrawString("UPGRADE 10000",CIwFVec2(2*Iw2DGetSurfaceWidth()*0.11f,Iw2DGetSurfaceHeight()*0.54f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(2*Iw2DGetSurfaceWidth()*0.115f+Iw2DGetStringWidth("UPGRADE 10000"),Iw2DGetSurfaceHeight()*0.54f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
+				break;
+			case 25:
+				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.55f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,72),CIwFVec2(60,18));
+				Iw2DDrawString("MAX LEVEL",CIwFVec2(2*Iw2DGetSurfaceWidth()*0.11f,Iw2DGetSurfaceHeight()*0.54f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				break;
+		}
+
+		sprintf(str,"MEGA WARP X %d",megawarp);
+		Iw2DDrawString(str,CIwFVec2(Iw2DGetSurfaceWidth()*0.48f,Iw2DGetSurfaceHeight()*0.50f+size.y/2-font_size/2),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+		Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.55f,Iw2DGetSurfaceHeight()*0.50f),size,CIwFVec2(150,0),CIwFVec2(50,50));
+		Iw2DDrawString("AVAILABLE ONCE in each play",CIwFVec2(Iw2DGetSurfaceWidth()*0.45f,Iw2DGetSurfaceHeight()*0.52f+size.y),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+		Iw2DDrawString("PURCHASE 1000",CIwFVec2(Iw2DGetSurfaceWidth()*0.58f,Iw2DGetSurfaceHeight()*0.54f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+		Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.58f+Iw2DGetSurfaceWidth()*0.01f+Iw2DGetStringWidth("PURCHASE 1000"),Iw2DGetSurfaceHeight()*0.54f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
+	}
+	else if (subpage == 3)
+	{
+		Iw2DDrawImage(getresource->get_panel(),main_panel_pos,main_panel_size);
+
+		if(collected_star>=1000)
+		{
+			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.02f,Iw2DGetSurfaceHeight()*0.18f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(0,0),CIwFVec2(25,25));
+		}
+		else
+		{
+			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.02f,Iw2DGetSurfaceHeight()*0.18f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(25,0),CIwFVec2(25,25));
+		}		
+		Iw2DDrawImageRegion(getresource->get_star_rank(),CIwFVec2(Iw2DGetSurfaceWidth()*0.03f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.15f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(0,0),CIwFVec2(100,100));
+		Iw2DDrawString("Attentive [Star 1000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.04f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.20f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Attentive [Star 1000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+
+		if(collected_star>=10000)
+		{
+			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.02f,Iw2DGetSurfaceHeight()*0.30f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(0,0),CIwFVec2(25,25));
+		}
+		else
+		{
+			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.02f,Iw2DGetSurfaceHeight()*0.30f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(25,0),CIwFVec2(25,25));
+		}
+		Iw2DDrawImageRegion(getresource->get_star_rank(),CIwFVec2(Iw2DGetSurfaceWidth()*0.03f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.27f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(100,0),CIwFVec2(100,100));
+		Iw2DDrawString("Anxious [Star 10000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.04f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.32f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Anxious [Star 10000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+
+		if(collected_star>=20000)
+		{
+			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.02f,Iw2DGetSurfaceHeight()*0.42f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(0,0),CIwFVec2(25,25));
+		}
+		else
+		{
+			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.02f,Iw2DGetSurfaceHeight()*0.42f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(25,0),CIwFVec2(25,25));
+		}
+		Iw2DDrawImageRegion(getresource->get_star_rank(),CIwFVec2(Iw2DGetSurfaceWidth()*0.03f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.39f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(200,0),CIwFVec2(100,100));
+		Iw2DDrawString("Collector [Star 20000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.04f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.44f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Collector [Star 20000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+
+		if(collected_star>=50000)
+		{
+			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.02f,Iw2DGetSurfaceHeight()*0.54f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(0,0),CIwFVec2(25,25));
+		}
+		else
+		{
+			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.02f,Iw2DGetSurfaceHeight()*0.54f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(25,0),CIwFVec2(25,25));
+		}
+		Iw2DDrawImageRegion(getresource->get_star_rank(),CIwFVec2(Iw2DGetSurfaceWidth()*0.03f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.51f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(300,0),CIwFVec2(100,100));
+		Iw2DDrawString("Implausible [Star 50000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.04f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.56f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Implausible [Star 50000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+
+		if(collected_star>=100000)
+		{
+			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.02f,Iw2DGetSurfaceHeight()*0.66f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(0,0),CIwFVec2(25,25));
+		}
+		else
+		{
+			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.02f,Iw2DGetSurfaceHeight()*0.66f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(25,0),CIwFVec2(25,25));
+		}
+		Iw2DDrawImageRegion(getresource->get_star_rank(),CIwFVec2(Iw2DGetSurfaceWidth()*0.03f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.63f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(400,0),CIwFVec2(100,100));
+		Iw2DDrawString("Magnate [Star 100000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.04f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.68f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Magnate [Star 100000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+
+		if(high_score>=50000)
+		{
+			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.49f,Iw2DGetSurfaceHeight()*0.18f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(0,0),CIwFVec2(25,25));
+		}
+		else
+		{
+			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.49f,Iw2DGetSurfaceHeight()*0.18f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(25,0),CIwFVec2(25,25));
+		}
+		Iw2DDrawImageRegion(getresource->get_ranks(),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.15f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(0,0),CIwFVec2(100,100));
+		Iw2DDrawString("Novice [Highscore 50000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.51f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.20f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Novice [Highscore 50000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+
+		if(high_score>=100000)
+		{
+			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.49f,Iw2DGetSurfaceHeight()*0.30f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(0,0),CIwFVec2(25,25));
+		}
+		else
+		{
+			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.49f,Iw2DGetSurfaceHeight()*0.30f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(25,0),CIwFVec2(25,25));
+		}
+		Iw2DDrawImageRegion(getresource->get_ranks(),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.27f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(100,0),CIwFVec2(100,100));
+		Iw2DDrawString("Apprentice [Highscore 100000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.51f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.32f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Apprentice [Highscore 100000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+
+		if (high_score>=200000)
+		{
+			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.49f,Iw2DGetSurfaceHeight()*0.42f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(0,0),CIwFVec2(25,25));
+		}
+		else
+		{
+			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.49f,Iw2DGetSurfaceHeight()*0.42f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(25,0),CIwFVec2(25,25));
+		}
+		Iw2DDrawImageRegion(getresource->get_ranks(),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.39f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(200,0),CIwFVec2(100,100));
+		Iw2DDrawString("Paramount [Highscore 200000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.51f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.44f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Paramount [Highscore 200000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+
+		if(high_score>=300000)
+		{
+			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.49f,Iw2DGetSurfaceHeight()*0.54f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(0,0),CIwFVec2(25,25));
+		}
+		else
+		{
+			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.49f,Iw2DGetSurfaceHeight()*0.54f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(25,0),CIwFVec2(25,25));
+		}
+		Iw2DDrawImageRegion(getresource->get_ranks(),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.51f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(300,0),CIwFVec2(100,100));
+		Iw2DDrawString("Mythical [Highscore 300000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.51f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.56f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Mythical [Highscore 300000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+
+		if (high_score>=500000)
+		{
+			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.49f,Iw2DGetSurfaceHeight()*0.66f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(0,0),CIwFVec2(25,25));
+		}
+		else
+		{
+			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.49f,Iw2DGetSurfaceHeight()*0.66f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(25,0),CIwFVec2(25,25));
+		}
+		Iw2DDrawImageRegion(getresource->get_ranks(),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.63f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(400,0),CIwFVec2(100,100));
+		Iw2DDrawString("Legendary [Highscore 500000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.51f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.68f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Legendary [Highscore 500000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
 	}
 }
 
@@ -1159,10 +1611,6 @@ void gamePlay::update_play_page()
 		{
 			l_speed += 0.005f;
 		}
-		else if(l_speed < g_speed+5)
-		{
-			l_speed += 0.0001f;
-		}
 
 		//-----------------spacecraft up and down animation---------------------
 
@@ -1172,7 +1620,7 @@ void gamePlay::update_play_page()
 				s3ePointerGetX()<= Iw2DGetSurfaceHeight()*0.20f &&
 				s3ePointerGetY()>=Iw2DGetSurfaceHeight()*0.85f &&
 				s3ePointerGetY()<=Iw2DGetSurfaceHeight()*0.85f+Iw2DGetSurfaceHeight()*0.15f &&
-				mega_active == 1)
+				mega_active == 1 && !(power == 1 && power_on_time!=0) && !(power == 2 && power_on_time!=0) && !(power == 3 && power_on_time!=0))
 			{
 				power = 4;
 				power_on_time = power_time[3];
@@ -1247,14 +1695,22 @@ void gamePlay::update_play_page()
 
 			//-----------energy absorption-----------------
 
-			if (power_compare(sc_pos,reenergy_pos[i],sc_size,reenergy_size) && reenergy_show[i] == 1)
+			if (power_compare(sc_pos,reenergy_pos[i],sc_size,reenergy_size) && reenergy_show[i] == 1 && !(power == 1 && power_on_time!=0) && !(power == 4 && power_on_time!=0))
 			{
 				reenergy_show[i] = 0;
 				reenergy = 1;//energy = 500;
+				if(music != 0)
+				{
+					CIwSoundInst* SoundInstance = Fuel_sound->Play();
+				}
 			}
 
 			if (power_compare(sc_pos,power_pos[i],sc_size,power_size) && power_show[i] == 1)
 			{
+				if (music != 0)
+				{
+					CIwSoundInst* SoundInstance = Power_sound->Play();
+				}
 				if(power == 1|| power == 2 || power == 3)
 				{
 					power_avail = power_time[power-1]+6;
@@ -1453,9 +1909,28 @@ void gamePlay::update_play_page()
 				high_score = score;
 			}
 			total_star += star;
+			collected_star += star;
 			blast = 0;
 			delay = 30;
 			page = 0;
+
+			_store->score = high_score;
+			_store->star = total_star;
+			_store->m = music;
+			_store->mw = megawarp;
+			_store->sc = sc_sel;
+			_store->cstar = collected_star;
+			for (int i = 0; i < 6; i++)
+			{
+				_store->sc_l[i] = sc_locked[i];
+			}
+			for (int i = 0; i < 4; i++)
+			{
+				_store->pt[i] = power_time[i];
+			}
+
+			s3eSecureStoragePut(_store,sizeof(struct save));
+
 			ini_main_page();
 			ini_play_page();
 		}
