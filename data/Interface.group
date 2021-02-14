@@ -1,0 +1,26 @@
+CIwResGroup
+{
+	name Interface
+
+	"design/settings.png"
+	"design/energy.png"
+
+	"effects/explosion.wav"
+	"effects/star.wav"
+
+	CIwSoundSpec
+	{
+		name		"explosion"		# The name we want to use to refer to this sound effect in out code
+		data		"explosion"		# The WAv file name (without .wav
+		vol 		0.8				# Default volume to be played at
+		loop		false			# Do we want this sound effect to play forever?
+	}
+
+	CIwSoundSpec
+	{
+		name		"star"		# The name we want to use to refer to this sound effect in out code
+		data		"star"		# The WAv file name (without .wav
+		vol 		0.5			# Default volume to be played at
+		loop		false		# Do we want this sound effect to play forever?
+	}
+}

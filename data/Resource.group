@@ -5,4 +5,5 @@ CIwResGroup
 	"Environment.group"
 	"Iw2DStrings.group"
 	"Gameplay.group"
+	"Interface.group"
 }

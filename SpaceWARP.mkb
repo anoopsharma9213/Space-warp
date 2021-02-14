@@ -11,10 +11,16 @@ files
 
 }
 
+options
+{
+	module_path="$MARMALADE_ROOT/examples"
+}
+
 subprojects
 {
     iw2d
 	s3eWindowsPhoneAd
+	SoundEngine
 }
 
 deployment
@@ -26,9 +32,13 @@ deployment
 
 assets
 {
+	(data)
+		sound
+
 	(data-ram/data-gles1, data)
 		resource.group.bin
 		environment.group.bin
 		gameplay.group.bin
 		iw2dstrings.group.bin
+		interface.group.bin
 }

@@ -45,6 +45,7 @@ int main()
         while(frames--)
         {
 			newgame->Update();
+			IwGetSoundManager()->Update();
         }
         currentUpdate = nextUpdate;
 

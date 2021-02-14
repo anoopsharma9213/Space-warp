@@ -5,6 +5,7 @@
 #include "s3e.h"
 #include "IwResManager.h"
 #include "s3eWindowsPhoneAd.h"
+#include "IwSound.h"
 
 class Resources
 {
@@ -22,6 +23,7 @@ private:
 
 	CIw2DImage* spacecraft[5];
 	CIw2DImage *exhaust;
+	CIw2DImage *energy;
 	
 	CIw2DImage *astroid[3];
 	CIw2DImage *comet;
@@ -34,6 +36,8 @@ private:
 
 public:
 
+	CIwResGroup *Effects;
+
 	CIw2DImage *get_bg_star()			{return bg_star;}
 	CIw2DImage *get_planet_1()			{return planet_1;}
 	CIw2DImage *get_planet_2()			{return planet_2;}
@@ -42,6 +46,7 @@ public:
 	
 	CIw2DImage *get_spacecraft(int a)	{return spacecraft[a];}
 	CIw2DImage *get_exhaust()			{return exhaust;}
+	CIw2DImage *get_energy()			{return energy;}
 
 	CIw2DImage *get_astroid(int a)			{return astroid[a];}
 	CIw2DImage *get_comet()				{return comet;}

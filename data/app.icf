@@ -31,3 +31,6 @@ MaxBatch=2000
 
 [GX]
 DataCacheSize=50000
+
+[SOUND]
+MaxChannels=16

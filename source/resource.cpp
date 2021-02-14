@@ -2,8 +2,16 @@
 
 Resources::Resources()
 {
+	IwSoundInit();
 	IwResManagerInit();
+	
+	#ifdef IW_BUILD_RESOURCES
+		IwGetResManager()->AddHandler(new CIwResHandlerWAV);
+	#endif
+
 	IwGetResManager()->LoadGroup("Resource.group");
+
+	Effects = IwGetResManager()->GetGroupNamed("Interface");
 
 	bg_star = Iw2DCreateImageResource("bg_star");
 	planet_1 = Iw2DCreateImageResource("planet1");
@@ -14,6 +22,7 @@ Resources::Resources()
 	spacecraft[0] = Iw2DCreateImageResource("spacecraft_1");
 	spacecraft[1] = Iw2DCreateImageResource("spacecraft_2");
 	exhaust = Iw2DCreateImageResource("exhaust");
+	energy = Iw2DCreateImageResource("energy");
 	bonus_star = Iw2DCreateImageResource("bonus_star");
 
 	astroid[0] = Iw2DCreateImageResource("astroid_1");
@@ -24,8 +33,6 @@ Resources::Resources()
 	explosion = Iw2DCreateImageResource("explosion");
 
 	font = Iw2DCreateFontResource("viner26_white");
-
-	//bonus_star = Iw2DCreateImageResource
 }
 
 Resources::~Resources()
@@ -39,6 +46,7 @@ Resources::~Resources()
 	delete spacecraft[0];
 	delete spacecraft[1];
 	delete exhaust;
+	delete energy;
 	delete bonus_star;
 
 	for (int i = 0; i < 3; i++)
@@ -52,6 +60,7 @@ Resources::~Resources()
 
 	IwGetResManager()->DestroyGroup("Resource");
 	IwResManagerTerminate();
+	IwSoundTerminate();
 }
 
 Resources *getresource = 0;

@@ -7,7 +7,18 @@
 class gamePlay
 {
 private:
-	int page, resume, g_speed;
+
+	struct save
+	{
+		float star,score;
+		int m;
+	}*_store;
+
+	char str[50];
+	int page, resume;
+	float g_speed, l_speed;
+
+	int m_tem[4];
 
 	//-----Environment--------------
 	CIwFVec2 pos_star[10];
@@ -28,16 +39,27 @@ private:
 	int exhaust_sel;
 
 	CIwFVec2 bstar_pos[12], bstar_size;
-	int bstar_x, bstar_y, bstar_i;
+	int bstar_x, bstar_y, bstar_i, bstar_show[12];
 	
 	CIwFVec2 com_pos[2], com_size;
 	int com_x, com_i;
 
 	CIwFVec2 ast_pos[8], ast_size;
-	int ast_x, ast_i, ast_s[8];
+	int ast_x, ast_i, ast_s[8], ast_show[8];
 
 	int blast, b_x, b_y;
 	int sequence;
+
+	//------Interface---------------
+
+	//int schannel;
+	int music, energy;
+	CIwFVec2 energy_size, energy_pos;
+
+	//------Collectibles------------
+	float star, score, lives;
+	float high_score, total_star;
+	CIwFVec2 star_pos, star_size, score_pos, score_size, lives_pos, lives_size;
 
 public:
 
@@ -58,6 +80,8 @@ public:
 
 	bool compare(CIwFVec2,CIwFVec2,CIwFVec2,CIwFVec2);
 	bool com_compare(CIwFVec2,CIwFVec2,CIwFVec2,CIwFVec2);
+	bool star_compare(CIwFVec2,CIwFVec2,CIwFVec2,CIwFVec2);
+
 	void sequence_1(int);
 	void sequence_2(int);
 	void sequence_3(int);
