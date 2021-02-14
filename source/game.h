@@ -16,7 +16,7 @@ private:
 
 	char str[50];
 	int page, resume;
-	float g_speed, l_speed;
+	float g_speed, l_speed, t_speed;
 
 	int m_tem[4];
 
@@ -68,8 +68,11 @@ private:
 	//------Powerups and resources----
 	CIwFVec2 reenergy_pos[2], reenergy_size;
 	int reenergy_show[2];
-	CIwFVec2 power_pos, power_size, powerglow_pos, powerglow_size;
-	int power;
+	CIwFVec2 power_pos[2], power_size, powerglow_pos, powerglow_size;
+	int power, power_show[2], power_avail, power_on_time;
+
+	//--------Powerups timer----------
+	int power_time[4];
 
 public:
 
@@ -91,6 +94,7 @@ public:
 	bool compare(CIwFVec2,CIwFVec2,CIwFVec2,CIwFVec2);
 	bool com_compare(CIwFVec2,CIwFVec2,CIwFVec2,CIwFVec2);
 	bool star_compare(CIwFVec2,CIwFVec2,CIwFVec2,CIwFVec2);
+	bool power_compare(CIwFVec2,CIwFVec2,CIwFVec2,CIwFVec2);
 
 	void sequence_1(int);
 	void sequence_2(int);
