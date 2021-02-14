@@ -13,22 +13,22 @@ files
 
 subprojects
 {
-    iwutil
-    iw2dscenegraphcore
-    iw2dscenegraph
-    iwgx
-    iwresmanager
-    iwtween
+    iw2d
+	s3eWindowsPhoneAd
 }
 
 deployment
 {
 	version="1.0.0"
+	name="Space Warp"
+	caption="Space Warp"
 }
 
 assets
 {
-	(data)
-		design
-		font
+	(data-ram/data-gles1, data)
+		resource.group.bin
+		environment.group.bin
+		gameplay.group.bin
+		iw2dstrings.group.bin
 }

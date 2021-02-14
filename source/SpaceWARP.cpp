@@ -1,15 +1,16 @@
-#include "s3e.h"
 #include "game.h"
-#include "resource.h"
-#include "IwDebug.h"
-#include "Iw2DSceneGraph.h"
-#include "IwGx.h"
 
-using namespace Iw2DSceneGraphCore;
-using namespace Iw2DSceneGraph;
+// updates per second
+#define UPS 30
 
-// Scene root node
-CNode* g_SceneRoot = NULL;
+// throttle frame time at 10 fps (i.e. the game will slow down rather
+// than having very low frame rate)
+#define MAX_UPDATES 6
+
+int GetUpdateFrame()
+{
+    return (int)(s3eTimerGetMs() / (1000/UPS));
+}
 
 // Main entry point for the application
 int main()
@@ -17,41 +18,47 @@ int main()
     //Initialise graphics system(s)
     Iw2DInit();
 
-    // Create root node
-    g_SceneRoot = new CNode();
-
-    // Add 2D scene graph nodes to the root node here
-	getresource = new Resources();
+    getresource = new Resources();
 	newgame = new gamePlay();
 
-    // Loop forever, until the user or the OS performs some action to quit the app
-    while (!s3eDeviceCheckQuitRequest())
+    int currentUpdate = GetUpdateFrame();
+    int nextUpdate = currentUpdate;
+
+    // to exit correctly, applications should poll for quit requests
+    while(!s3eDeviceCheckQuitRequest())
     {
-        //Update the input systems
-        s3eKeyboardUpdate();
+        // run logic at a fixed frame rate (defined by UPS)
+
+        // block until the next frame (don't render unless at
+        // least one update has occurred)
+        while(!s3eDeviceCheckQuitRequest())
+        {
+            nextUpdate = GetUpdateFrame();
+            if( nextUpdate != currentUpdate )
+                break;
+            s3eDeviceYield(1);
+        }
+
+        // execute update steps
+        int frames = nextUpdate - currentUpdate;
+        frames = MIN(MAX_UPDATES, frames);
+        while(frames--)
+        {
+			newgame->Update();
+        }
+        currentUpdate = nextUpdate;
+
+        // render the results
+		newgame->Render();
+
+        // if an application uses polling input the application
+        // must call update once per frame
         s3ePointerUpdate();
+        s3eKeyboardUpdate();
 
-		newgame->refresh();
-        //Update the scene. The SDK's example framework has a fixed
-        //framerate of 20fps, so we pass that duration to the update function.
-        g_SceneRoot->Update(1000/20);
-
-        Iw2DSurfaceClear(0xff000000);
-
-		newgame->draw();
-        // Your rendering/app code goes here.
-
-        g_SceneRoot->Render();
-
-        //Draws Surface to screen
-        Iw2DSurfaceShow();
-
-        // Sleep for 0ms to allow the OS to process events etc.
+        // S3E applications should yield frequently
         s3eDeviceYield(0);
     }
-
-    //Terminate modules being used
-    delete g_SceneRoot;
 	delete getresource;
 	delete newgame;
     Iw2DTerminate();

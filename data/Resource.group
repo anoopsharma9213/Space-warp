@@ -1,0 +1,8 @@
+CIwResGroup
+{
+	name Resource
+
+	"Environment.group"
+	"Iw2DStrings.group"
+	"Gameplay.group"
+}

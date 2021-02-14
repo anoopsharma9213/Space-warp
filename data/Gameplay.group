@@ -1,0 +1,13 @@
+CIwResGroup
+{
+	name Gameplay
+
+	"design/astroid.png"
+	"design/comet.png"
+	"design/explosion.png"
+	"design/bonus_star.png"
+	"design/exhaust.png"
+
+	"design/spacecraft_1.png"
+	"design/spacecraft_2.png"
+}

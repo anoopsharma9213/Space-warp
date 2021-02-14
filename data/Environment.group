@@ -1,0 +1,10 @@
+CIwResGroup
+{
+	name Environment
+	
+	"design/bg_star.png"
+	"design/planet1.png"
+	"design/planet2.png"
+	"design/planet3.png"
+	"design/planet5.png"
+}

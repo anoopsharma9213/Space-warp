@@ -24,6 +24,8 @@ MemSize0=30000000
 MemSize1=40000000
 DispFixRot=Landscape
 
+MemSizeDebug=30000000
+
 [2D]
 MaxBatch=2000
 
