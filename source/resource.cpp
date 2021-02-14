@@ -52,6 +52,9 @@ Resources::Resources()
 	spacecraft_set = Iw2DCreateImageResource("spacecraft_set");
 
 	menu = Iw2DCreateImageResource("menu");
+	ok = Iw2DCreateImageResource("ok");
+	ranks = Iw2DCreateImageResource("ranks");
+	power_level = Iw2DCreateImageResource("power_level");
 
 	if(Iw2DGetSurfaceHeight()>=720)
 	{
@@ -101,6 +104,9 @@ Resources::~Resources()
 	delete spacecraft_locked;
 	delete spacecraft_set;
 	delete menu;
+	delete ok;
+	delete ranks;
+	delete power_level;
 
 	delete font;
 

@@ -47,6 +47,9 @@ private:
 	CIw2DImage *spacecraft_set;
 	CIw2DImage *spacecraft_locked;
 	CIw2DImage *menu;
+	CIw2DImage *ok;
+	CIw2DImage *power_level;
+	CIw2DImage *ranks;
 
 public:
 
@@ -69,8 +72,6 @@ public:
 	CIw2DImage *get_explosion()			{return explosion;}
 
 	CIw2DImage *get_bonus_star()		{return bonus_star;}
-	
-	CIw2DFont *get_font()				{return font;}
 
 	CIw2DImage *get_sound_key()			{return sound_key;}
 	CIw2DImage *get_home()				{return home;}
@@ -83,6 +84,11 @@ public:
 	CIw2DImage *get_spacecraft_set()	{return spacecraft_set;}
 	CIw2DImage *get_spacecraft_locked()	{return spacecraft_locked;}
 	CIw2DImage *get_menu()				{return menu;}
+	CIw2DImage *get_ok()				{return ok;}
+	CIw2DImage *get_ranks()				{return ranks;}
+	CIw2DImage *get_power_level()		{return power_level;}
+
+	CIw2DFont *get_font()				{return font;}
 
 	Resources();
 	~Resources();

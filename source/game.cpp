@@ -105,7 +105,7 @@ gamePlay::gamePlay()
 	subpage = 0;
 	//resume = 0;
 
-	if(s3eWindowsPhoneAdAvailable())
+	/*if(s3eWindowsPhoneAdAvailable())
 	{
 		ad_control = s3eWindowsPhoneAdCreate("test_client","Image480_80");
 		s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_HEIGHT,80);
@@ -116,7 +116,7 @@ gamePlay::gamePlay()
 		{
 			s3eWindowsPhoneAdShow(ad_control);
 		}
-	}
+	}*/
 
 	for (int i = 0; i < 4; i++)
 	{
@@ -139,7 +139,7 @@ gamePlay::gamePlay()
 	else
 	{
 		high_score = 0;
-		total_star = 0;
+		total_star = 10000000;
 		music = 2;
 		sc_sel = 0;
 		megawarp = 1;
@@ -149,8 +149,6 @@ gamePlay::gamePlay()
 			sc_locked[i] = 1;
 		}
 	}
-
-	total_star = 100000;
 
 	power_time[0] = 10;
 	power_time[2] = power_time[1] = 6;
@@ -293,13 +291,14 @@ void gamePlay::ini_Environment()
 	home_pos.x = (Iw2DGetSurfaceWidth()*0.50f+Iw2DGetSurfaceWidth()*0.15f)/2 - button_size.x/2;
 	sound_pos.x = (Iw2DGetSurfaceWidth()*0.85f+Iw2DGetSurfaceWidth()*0.50f)/2 - button_size.x/2;
 
-	spacecraft_set_size.y = spacecraft_set_size.x = Iw2DGetSurfaceWidth()*0.20f;
+	spacecraft_set_size.y = spacecraft_set_size.x = Iw2DGetSurfaceWidth()*0.17f;
 	spacecraft_set_pos[3].x = spacecraft_set_pos[0].x = Iw2DGetSurfaceWidth()*.10f;
 	spacecraft_set_pos[4].x = spacecraft_set_pos[1].x = Iw2DGetSurfaceWidth()*.50f-spacecraft_set_size.x/2;
 	spacecraft_set_pos[5].x = spacecraft_set_pos[2].x = Iw2DGetSurfaceWidth()*.90f-spacecraft_set_size.x;
 
 	spacecraft_set_pos[2].y = spacecraft_set_pos[1].y = spacecraft_set_pos[0].y = Iw2DGetSurfaceHeight()*0.10f;
 	spacecraft_set_pos[5].y = spacecraft_set_pos[4].y = spacecraft_set_pos[3].y = Iw2DGetSurfaceHeight()*0.80f-spacecraft_set_size.y;
+	spacecraft_tick_size.x = spacecraft_tick_size.y = Iw2DGetSurfaceWidth()*0.04f;
 }
 
 void gamePlay::update_Environment()
@@ -556,6 +555,19 @@ void gamePlay::ini_main_page()
 
 	sound_pos.x = (Iw2DGetSurfaceWidth()*0.50f+Iw2DGetSurfaceWidth()*0.90f)/2-button_size.x/2;
 	sound_pos.y = settings_pos.y;
+	
+	if(s3eWindowsPhoneAdAvailable())
+	{
+		ad_control = s3eWindowsPhoneAdCreate("test_client","Image480_80");
+		s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_HEIGHT,80);
+		s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_WIDTH,480);
+		s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_HALIGN,S3E_WINDOWSPHONE_ADCONTROL_HALIGN_CENTER);
+		s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_VALIGN,S3E_WINDOWSPHONE_ADCONTROL_VALIGN_BOTTOM);
+		if(s3eSocketGetInt(S3E_SOCKET_NETWORK_AVAILABLE))
+		{
+			s3eWindowsPhoneAdShow(ad_control);
+		}
+	}
 }
 
 void gamePlay::update_main_page()
@@ -608,6 +620,10 @@ void gamePlay::update_main_page()
 		{
 			trans = 0;
 			page = 1;
+			if(s3eWindowsPhoneAdAvailable())
+			{
+				s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_WIDTH,0);
+			}
 			ini_pause_page();
 		}
 	}
@@ -774,7 +790,7 @@ void gamePlay::ini_pause_page()
 
 void gamePlay::draw_pause_page()
 {
-	//Iw2DDrawImage(getresource->get_panel(),panel_pos,panel_size);
+	Iw2DDrawImage(getresource->get_panel(),panel_pos,panel_size);
 	Iw2DDrawImage(getresource->get_home(),home_pos,button_size);
 	Iw2DDrawImage(getresource->get_resume(),continue_pos,button_size);
 	if(music == 0)
@@ -921,6 +937,7 @@ void gamePlay::update_personalize_page()
 		}
 		sc_pos.x = Iw2DGetSurfaceWidth()*0.5f - sc_size.x*0.5f;
 		sc_pos.y = Iw2DGetSurfaceHeight()*0.5f - sc_size.y*0.5f;
+		lives = max_lives[sc_sel];
 		s3eKeyboardClearState();
 	}
 	switch (subpage)
@@ -1046,6 +1063,16 @@ void gamePlay::draw_personalize_page()
 				Iw2DDrawImageRegion(getresource->get_spacecraft_locked(),spacecraft_set_pos[i],spacecraft_set_size,CIwFVec2((i-1)*200,0),CIwFVec2(200,200));
 			}
 		}
+		Iw2DDrawImageRegion(getresource->get_ok(),spacecraft_set_pos[sc_sel],spacecraft_tick_size,CIwFVec2(0,0),CIwFVec2(25,25));
+	}
+	else if(subpage == 2)
+	{
+		Iw2DDrawImage(getresource->get_panel(),main_panel_pos,main_panel_size);
+
+		Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.25f-Iw2DGetSurfaceHeight()*0.15f/2,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(Iw2DGetSurfaceHeight()*0.15f,Iw2DGetSurfaceHeight()*0.15f),CIwFVec2(0,0),CIwFVec2(50,50));
+		Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.25f-Iw2DGetSurfaceHeight()*0.15f/2,Iw2DGetSurfaceHeight()*0.30f),CIwFVec2(Iw2DGetSurfaceHeight()*0.15f,Iw2DGetSurfaceHeight()*0.15f),CIwFVec2(50,0),CIwFVec2(50,50));
+		Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.25f-Iw2DGetSurfaceHeight()*0.15f/2,Iw2DGetSurfaceHeight()*0.50f),CIwFVec2(Iw2DGetSurfaceHeight()*0.15f,Iw2DGetSurfaceHeight()*0.15f),CIwFVec2(100,0),CIwFVec2(50,50));
+		Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.25f-Iw2DGetSurfaceHeight()*0.15f/2,Iw2DGetSurfaceHeight()*0.70f),CIwFVec2(Iw2DGetSurfaceHeight()*0.15f,Iw2DGetSurfaceHeight()*0.15f),CIwFVec2(150,0),CIwFVec2(50,50));
 	}
 }
 

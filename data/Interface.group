@@ -11,6 +11,9 @@ CIwResGroup
 	"design/rate_us.png"
 	"design/about_us.png"
 	"design/menu.png"
+	"design/ok.png"
+	"design/power_level.png"
+	"design/ranks.png"
 
 	"effects/explosion.wav"
 	"effects/star.wav"

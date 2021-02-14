@@ -65,6 +65,7 @@ private:
 	CIwSoundSpec* Explosion_sound;
 	CIwSoundSpec* Star_sound;
 	CIwFVec2 spacecraft_set_pos[6], spacecraft_set_size;
+	CIwFVec2 spacecraft_tick_size;
 
 	//------Collectibles------------
 	float star, score, lives, max_lives[6];
