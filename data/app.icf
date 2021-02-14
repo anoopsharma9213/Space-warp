@@ -20,7 +20,7 @@
 PreCompileShaderBinaries=1
 
 [s3e]
-MemSize = 70000000
+MemSize0=50000000
 DispFixRot=Landscape
 MemSizeDebug=70000000
 

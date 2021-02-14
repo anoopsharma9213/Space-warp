@@ -7,6 +7,7 @@
 #include "s3eWindowsPhoneAd.h"
 #include "s3eOSExec.h"
 #include "IwSound.h"
+#include "InMobiAds.h"
 
 class Resources
 {

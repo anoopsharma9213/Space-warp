@@ -21,6 +21,7 @@ subprojects
     iw2d
 	s3eWindowsPhoneAd
 	SoundEngine
+	InMobiAds
 }
 
 deployment
