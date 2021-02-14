@@ -8,6 +8,9 @@ CIwResGroup
 	"design/home.png"
 	"design/continue.png"
 	"design/panel.png"
+	"design/rate_us.png"
+	"design/about_us.png"
+	"design/menu.png"
 
 	"effects/explosion.wav"
 	"effects/star.wav"

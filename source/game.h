@@ -12,11 +12,12 @@ private:
 	{
 		float star,score;
 		int m, sc, mw;
+		int sc_l[6];
 	}*_store;
 
 	char str[50];
-	int page, delay;
-	float g_speed, l_speed, t_speed;
+	int page, delay, subpage;
+	float g_speed, l_speed, t_speed, font_size;
 
 	int m_tem[4];
 
@@ -36,11 +37,13 @@ private:
 	//-----Main Page----------------
 
 	int trans;
+	CIwFVec2 main_panel_pos, main_panel_size;
+	CIwFVec2 settings_pos, about_pos, rate_pos;
 
 	//-----SpaceCraft---------------
 	CIwFVec2 sc_pos, sc_size;
 	CIwFVec2 exhaust_pos, exhaust_size[3];
-	int exhaust_sel, sc_sel;
+	int exhaust_sel, sc_sel, sc_locked[6];
 
 	CIwFVec2 bstar_pos[12], bstar_size;
 	int bstar_x, bstar_y, bstar_i, bstar_show[12];
@@ -56,13 +59,15 @@ private:
 
 	//------Interface---------------
 
-	//int schannel;
 	int music, energy;
 	CIwFVec2 energy_size, energy_pos;
 	CIwFVec2 panel_size, panel_pos, continue_pos, home_pos, sound_pos, button_size;
+	CIwSoundSpec* Explosion_sound;
+	CIwSoundSpec* Star_sound;
+	CIwFVec2 spacecraft_set_pos[6], spacecraft_set_size;
 
 	//------Collectibles------------
-	float star, score, lives, max_lives[5];
+	float star, score, lives, max_lives[6];
 	float high_score, total_star;
 	CIwFVec2 star_pos, star_size, score_pos, score_size, lives_pos, lives_size;
 
@@ -98,6 +103,14 @@ public:
 	void draw_pause_page();
 	void update_pause_page();
 
+	void ini_personalize_page();
+	void draw_personalize_page();
+	void update_personalize_page();
+
+	void ini_about_page();
+	void draw_about_page();
+	void update_about_page();
+
 	bool compare(CIwFVec2,CIwFVec2,CIwFVec2,CIwFVec2);
 	bool com_compare(CIwFVec2,CIwFVec2,CIwFVec2,CIwFVec2);
 	bool star_compare(CIwFVec2,CIwFVec2,CIwFVec2,CIwFVec2);
@@ -115,6 +128,9 @@ public:
 	void sequence_10(int);
 	void sequence_11(int);
 	void sequence_12(int);
+
+	int get_page(){return page;}
+	void set_page();
 
 	gamePlay();
 	~gamePlay();

@@ -12,6 +12,17 @@ int GetUpdateFrame()
     return (int)(s3eTimerGetMs() / (1000/UPS));
 }
 
+
+int32 device_pause(void* system, void* user)
+{
+	if(newgame->get_page() == 1)
+	{
+		newgame->set_page();
+	}
+
+	return 0;
+}
+
 // Main entry point for the application
 int main()
 {
@@ -20,6 +31,7 @@ int main()
 
     getresource = new Resources();
 	newgame = new gamePlay();
+	s3eDeviceRegister(S3E_DEVICE_PAUSE,(s3eCallback)device_pause,0);
 
     int currentUpdate = GetUpdateFrame();
     int nextUpdate = currentUpdate;

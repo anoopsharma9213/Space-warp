@@ -11,6 +11,10 @@ void gamePlay::Update()
 			_store->m = music;
 			_store->mw = megawarp;
 			_store->sc = sc_sel;
+			for (int i = 0; i < 6; i++)
+			{
+				_store->sc_l[i] = sc_locked[i];
+			}
 
 			s3eSecureStoragePut(_store,sizeof(struct save));
 			s3eAudioStop();
@@ -19,7 +23,7 @@ void gamePlay::Update()
 	}
 
 
-	if(s3eDeviceGetInt(S3E_DEVICE_OS)==S3E_OS_ID_WP8 && music == 2)
+	if(s3eDeviceGetInt(S3E_DEVICE_OS)==S3E_OS_ID_WP8)
 	{
 		switch (m_tem[0])
 		{
@@ -54,17 +58,18 @@ void gamePlay::Update()
 	}
 	update_Environment();
 
-	if(page == 0)
-	{	
-		update_main_page();
-	}
-	else if(page == 1)
+	switch (page)
 	{
-		update_play_page();
-	}
-	else if(page == -1)
-	{
-		update_pause_page();
+		case 0: update_main_page();
+			break;
+		case 1: update_play_page();
+			break;
+		case -1: update_pause_page();
+			break;
+		case -2: update_personalize_page();
+			break;
+		case -3: update_about_page();
+			break;
 	}
 }
 
@@ -76,40 +81,42 @@ void gamePlay::Render()
 	IwRandSeed((int)s3eTimerGetMs());
 
 	draw_Environment();
-	if(page == 0)
+
+	switch (page)
 	{
-		draw_main_page();
+		case 0: draw_main_page();
+			break;
+		case 1: draw_play_page();
+			break;
+		case -1: draw_play_page(); draw_pause_page();
+			break;
+		case -2: draw_main_page(); draw_personalize_page();
+			break;
+		case -3:  draw_about_page();
+			break;
 	}
-	else if(page == 1)
-	{
-		draw_play_page();
-	}
-	else if(page == -1)
-	{
-		draw_play_page();
-		draw_pause_page();
-	}
-		
+
 	Iw2DSurfaceShow();
 }
 
 gamePlay::gamePlay()
 {
 	page = 0;
+	subpage = 0;
 	//resume = 0;
 
-	/*if(s3eWindowsPhoneAdAvailable())
-			{
-				ad_control = s3eWindowsPhoneAdCreate("test_client","Image480_80");
-				s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_HEIGHT,80);
-				s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_WIDTH,480);
-				s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_HALIGN,S3E_WINDOWSPHONE_ADCONTROL_HALIGN_CENTER);
-				s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_VALIGN,S3E_WINDOWSPHONE_ADCONTROL_VALIGN_BOTTOM);
-				if(s3eSocketGetInt(S3E_SOCKET_NETWORK_AVAILABLE))
-				{
-					s3eWindowsPhoneAdShow(ad_control);
-				}
-			}*/
+	if(s3eWindowsPhoneAdAvailable())
+	{
+		ad_control = s3eWindowsPhoneAdCreate("test_client","Image480_80");
+		s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_HEIGHT,80);
+		s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_WIDTH,480);
+		s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_HALIGN,S3E_WINDOWSPHONE_ADCONTROL_HALIGN_CENTER);
+		s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_VALIGN,S3E_WINDOWSPHONE_ADCONTROL_VALIGN_BOTTOM);
+		if(s3eSocketGetInt(S3E_SOCKET_NETWORK_AVAILABLE))
+		{
+			s3eWindowsPhoneAdShow(ad_control);
+		}
+	}
 
 	for (int i = 0; i < 4; i++)
 	{
@@ -124,30 +131,50 @@ gamePlay::gamePlay()
 		music = _store->m;
 		sc_sel = _store->sc;
 		megawarp = _store->mw;
+		for (int i = 0; i < 6; i++)
+		{
+			sc_locked[i] = _store->sc_l[i];
+		}
 	}
 	else
 	{
 		high_score = 0;
 		total_star = 0;
-		music = 1;
+		music = 2;
 		sc_sel = 0;
 		megawarp = 1;
+		sc_locked[0] = 0;
+		for (int i = 1; i < 6; i++)
+		{
+			sc_locked[i] = 1;
+		}
 	}
+
+	total_star = 100000;
 
 	power_time[0] = 10;
 	power_time[2] = power_time[1] = 6;
 	power_time[3] = 30;
 
-	max_lives[0] = 3;
+	max_lives[0] = 2;
 	max_lives[1] = 3;
 	max_lives[2] = 4;
 	max_lives[3] = 5;
 	max_lives[4] = 2;
+	max_lives[5] = 5;
 	
-	if(music == 2)
+	s3eAudioPlay("sound/bg.mp3",1);
+
+	if(music != 2)
 	{
-		s3eAudioPlay("sound/bg.mp3",1);
+		s3eAudioSetInt(S3E_AUDIO_VOLUME,0);
 	}
+	else
+	{
+		s3eAudioSetInt(S3E_AUDIO_VOLUME,S3E_AUDIO_MAX_VOLUME);
+	}
+	Explosion_sound = (CIwSoundSpec*)getresource->Effects->GetResNamed("explosion", IW_SOUND_RESTYPE_SPEC);
+	Star_sound = (CIwSoundSpec*)getresource->Effects->GetResNamed("star", IW_SOUND_RESTYPE_SPEC);
 
 	if(Iw2DGetSurfaceHeight()>=1080)
 	{
@@ -159,22 +186,23 @@ gamePlay::gamePlay()
 	}
 	else if (Iw2DGetSurfaceHeight()>=400)
 	{
-		g_speed = 4;
+		g_speed = 3;
 	}
 	else
 	{
-		g_speed = 3;
+		g_speed = 2;
 	}
+
 	l_speed = g_speed;
 	delay = 0;
 
 	Iw2DSetFont(getresource->get_font());
+	font_size = (float)(getresource->get_font()->GetHeight());
 
 	IwRandSeed((int)s3eTimerGetMs());
 	ini_Environment();
 	ini_main_page();
 	ini_play_page();
-	ini_pause_page();
 }
 
 gamePlay::~gamePlay()
@@ -183,6 +211,7 @@ gamePlay::~gamePlay()
 }
 
 //--------------------------------ENVIRONMENT-----------------------------------------------
+//---------------------------------------------------------------------------------------------------------
 
 void gamePlay::ini_Environment()
 {
@@ -252,7 +281,25 @@ void gamePlay::ini_Environment()
 	panel_pos.x = Iw2DGetSurfaceWidth()*0.50f-panel_size.x/2;
 	panel_pos.y = Iw2DGetSurfaceHeight()*0.50f-panel_size.y/2;
 
+	main_panel_size.x = Iw2DGetSurfaceWidth()*0.99f;
+	main_panel_size.y = Iw2DGetSurfaceHeight()*0.99f;
+	main_panel_pos.x = Iw2DGetSurfaceWidth()*0.50f-main_panel_size.x/2;
+	main_panel_pos.y = Iw2DGetSurfaceHeight()*0.50f-main_panel_size.y/2;
+
 	button_size.x = button_size.y = Iw2DGetSurfaceHeight()*0.17f;
+	sound_pos.y = home_pos.y = continue_pos.y = Iw2DGetSurfaceHeight()*0.50f - button_size.y/2;
+
+	continue_pos.x = Iw2DGetSurfaceWidth()*0.50f - button_size.x/2;
+	home_pos.x = (Iw2DGetSurfaceWidth()*0.50f+Iw2DGetSurfaceWidth()*0.15f)/2 - button_size.x/2;
+	sound_pos.x = (Iw2DGetSurfaceWidth()*0.85f+Iw2DGetSurfaceWidth()*0.50f)/2 - button_size.x/2;
+
+	spacecraft_set_size.y = spacecraft_set_size.x = Iw2DGetSurfaceWidth()*0.20f;
+	spacecraft_set_pos[3].x = spacecraft_set_pos[0].x = Iw2DGetSurfaceWidth()*.10f;
+	spacecraft_set_pos[4].x = spacecraft_set_pos[1].x = Iw2DGetSurfaceWidth()*.50f-spacecraft_set_size.x/2;
+	spacecraft_set_pos[5].x = spacecraft_set_pos[2].x = Iw2DGetSurfaceWidth()*.90f-spacecraft_set_size.x;
+
+	spacecraft_set_pos[2].y = spacecraft_set_pos[1].y = spacecraft_set_pos[0].y = Iw2DGetSurfaceHeight()*0.10f;
+	spacecraft_set_pos[5].y = spacecraft_set_pos[4].y = spacecraft_set_pos[3].y = Iw2DGetSurfaceHeight()*0.80f-spacecraft_set_size.y;
 }
 
 void gamePlay::update_Environment()
@@ -393,17 +440,44 @@ void gamePlay::draw_Environment()
 		Iw2DDrawImage(getresource->get_planet_5(),cp_pos,cp_size);
 	}
 	Iw2DSetColour(0xffffffff);
-	
 }
 
 //---------------------------------------------MAIN PAGE--------------------------------------------
+//---------------------------------------------------------------------------------------------------------
 
 void gamePlay::ini_main_page()
 {
 	l_speed = g_speed;
 
-	sc_size.y = Iw2DGetSurfaceHeight()*0.20f;
-	sc_size.x = sc_size.y*0.99f;
+	switch (sc_sel)
+	{
+		case 0:	
+			sc_size.y = Iw2DGetSurfaceHeight()*0.20f;
+			sc_size.x = sc_size.y*0.74f;
+			break;
+		case 1:
+			sc_size.y = Iw2DGetSurfaceHeight()*0.20f;
+			sc_size.x = sc_size.y*1.2f;
+			break;
+		case 2:
+			sc_size.y = Iw2DGetSurfaceHeight()*0.20f;
+			sc_size.x = sc_size.y*1.2f;
+			break;
+		case 3:
+			sc_size.y = Iw2DGetSurfaceHeight()*0.20f;
+			sc_size.x = sc_size.y;
+			break;
+		case 4:
+			sc_size.y = Iw2DGetSurfaceHeight()*0.20f;
+			sc_size.x = sc_size.y*1.2f;
+			break;
+		case 5:
+			sc_size.y = Iw2DGetSurfaceHeight()*0.20f;
+			sc_size.x = sc_size.y;
+			break;
+	}
+	sc_pos.x = Iw2DGetSurfaceWidth()*0.5f - sc_size.x*0.5f;
+	sc_pos.y = Iw2DGetSurfaceHeight()*0.5f - sc_size.y*0.5f;
 
 	exhaust_size[0].y = Iw2DGetSurfaceHeight()*0.020f;
 	exhaust_size[1].y = Iw2DGetSurfaceHeight()*0.030f;
@@ -427,9 +501,6 @@ void gamePlay::ini_main_page()
 	bstar_x = 0;
 	bstar_y = 0;
 
-	sc_pos.x = Iw2DGetSurfaceWidth()*0.5f - sc_size.x*0.5f;
-	sc_pos.y = Iw2DGetSurfaceHeight()*0.5f - sc_size.y*0.5f;
-
 	exhaust_sel = 0;
 	exhaust_pos.x = sc_pos.x - exhaust_size[exhaust_sel].x;
 	exhaust_pos.y = sc_pos.y + sc_size.y/2 -exhaust_size[exhaust_sel].y/2;
@@ -438,9 +509,9 @@ void gamePlay::ini_main_page()
 
 	star = 0;
 	star_size.x = Iw2DGetSurfaceWidth()*0.30f;
-	star_size.y = 30;
+	star_size.y = font_size;
 	star_pos.x = Iw2DGetSurfaceWidth()*0.05f+2*(Iw2DGetSurfaceWidth()*0.005f);
-	star_pos.y = Iw2DGetSurfaceHeight()*0.005f+Iw2DGetSurfaceHeight()*0.05f-star_size.y;
+	star_pos.y = Iw2DGetSurfaceHeight()*0.005f+Iw2DGetSurfaceHeight()*0.05f/2-star_size.y/2;
 	
 	score = 0;
 	score_size = star_size;
@@ -454,11 +525,11 @@ void gamePlay::ini_main_page()
 
 	energy = 500;
 	energy_size.x = Iw2DGetSurfaceWidth()*0.0004f*energy;
-	energy_size.y = lives_size.y/2;
+	energy_size.y = lives_size.y/4;
 	energy_pos.x = star_pos.x;
 	energy_pos.y = Iw2DGetSurfaceHeight()*0.05f*1.5f+2*(Iw2DGetSurfaceHeight()*0.005f)-energy_size.y/2;
 
-	reenergy_size.y = reenergy_size.x = Iw2DGetSurfaceHeight()*0.08f;
+	reenergy_size.y = reenergy_size.x = Iw2DGetSurfaceHeight()*0.15f;
 	reenergy = 0;
 
 	power = 0;
@@ -473,11 +544,62 @@ void gamePlay::ini_main_page()
 	megawarp_size = star_size;
 	megawarp_pos.x = Iw2DGetSurfaceHeight()*0.10f+2*(Iw2DGetSurfaceWidth()*0.005f);
 	megawarp_pos.y = Iw2DGetSurfaceHeight()*0.90f+Iw2DGetSurfaceHeight()*0.10f-megawarp_size.y;
+
+	about_pos.x = 0;
+	about_pos.y = Iw2DGetSurfaceHeight()-button_size.y;
+
+	rate_pos.x = Iw2DGetSurfaceWidth()-button_size.x;
+	rate_pos.y = about_pos.y;
+
+	settings_pos.x = (Iw2DGetSurfaceWidth()*0.50f+Iw2DGetSurfaceWidth()*0.10f)/2-button_size.x/2;
+	settings_pos.y = Iw2DGetSurfaceHeight()*0.50f - button_size.y/2;
+
+	sound_pos.x = (Iw2DGetSurfaceWidth()*0.50f+Iw2DGetSurfaceWidth()*0.90f)/2-button_size.x/2;
+	sound_pos.y = settings_pos.y;
 }
 
 void gamePlay::update_main_page()
 {
-	if(trans == 1)
+	/*
+	if (delay == 0)
+	{
+		sc_sel++;
+		if (sc_sel ==6)
+		{
+			sc_sel = 0;
+		}
+		delay = 200;
+		switch (sc_sel)
+	{
+		case 0:
+			sc_size.y = Iw2DGetSurfaceHeight()*0.20f;
+			sc_size.x = sc_size.y*0.74f;
+			break;
+		case 1:
+			sc_size.y = Iw2DGetSurfaceHeight()*0.13f;
+			sc_size.x = sc_size.y*1.53f;
+			break;
+		case 2:
+			sc_size.y = Iw2DGetSurfaceHeight()*0.15f;
+			sc_size.x = sc_size.y*1.33f;
+			break;
+		case 3:
+			sc_size.y = Iw2DGetSurfaceHeight()*0.20f;
+			sc_size.x = sc_size.y*0.99f;
+			break;
+		case 4:
+			sc_size.y = Iw2DGetSurfaceHeight()*0.09f;
+			sc_size.x = sc_size.y*2.12f;
+			break;
+		case 5:
+			sc_size.y = Iw2DGetSurfaceHeight()*0.20f;
+			sc_size.x = sc_size.y*1.02f;
+			break;
+	}
+		sc_pos.x = Iw2DGetSurfaceWidth()*0.5f - sc_size.x*0.5f;
+	sc_pos.y = Iw2DGetSurfaceHeight()*0.5f - sc_size.y*0.5f;
+	}
+	*/if(trans == 1)
 	{
 		sc_pos.x -= l_speed;
 		powerglow_pos.x -= l_speed;
@@ -486,15 +608,80 @@ void gamePlay::update_main_page()
 		{
 			trans = 0;
 			page = 1;
+			ini_pause_page();
 		}
 	}
 	else
 	{
 		if( (s3ePointerGetState(S3E_POINTER_BUTTON_SELECT) & S3E_POINTER_STATE_DOWN))
 		{
-			if((s3ePointerGetX()>=sc_pos.x && s3ePointerGetX()<=sc_pos.x+sc_size.x) && (s3ePointerGetY()>=sc_pos.y && s3ePointerGetY()<=sc_pos.y+sc_size.y))
+			if((s3ePointerGetX()>=sc_pos.x && s3ePointerGetX()<=sc_pos.x+sc_size.x) &&
+				(s3ePointerGetY()>=sc_pos.y && s3ePointerGetY()<=sc_pos.y+sc_size.y))
 			{
-				trans = 1;
+				if(delay == 0)
+				{
+					trans = 1;
+				}
+			}
+			else if (s3ePointerGetX()>=sound_pos.x && s3ePointerGetX()<=sound_pos.x+button_size.x &&
+				s3ePointerGetY()>=sound_pos.y && s3ePointerGetY()<=sound_pos.y+button_size.y)
+			{
+				if(music == 0 && delay == 0)
+				{
+					music = 1;
+					CIwSoundInst* SoundInstance = Star_sound->Play();
+					delay = 30;
+				}
+				else if(music == 1 && delay == 0)
+				{
+					music = 2;
+					s3eAudioSetInt(S3E_AUDIO_VOLUME,S3E_AUDIO_MAX_VOLUME);
+					delay = 30;
+				}
+				else if(music == 2 && delay == 0)
+				{
+					music = 0;
+					s3eAudioSetInt(S3E_AUDIO_VOLUME,0);
+					delay = 30;
+				}
+			}
+			else if (s3ePointerGetX()>=rate_pos.x && s3ePointerGetX()<=rate_pos.x+button_size.x &&
+				s3ePointerGetY()>=rate_pos.y && s3ePointerGetY()<=rate_pos.y+button_size.y)
+			{
+				if(delay == 0)
+				{
+					switch (s3eDeviceGetInt(S3E_DEVICE_OS))
+					{
+						case S3E_OS_ID_ANDROID:
+							s3eOSExecExecute("http://www.windowsphone.com/s?appid=ab3f9c1b-68bc-43fe-ac24-231ef3d92122",false);
+							break;
+						case S3E_OS_ID_WP8:
+							s3eOSExecExecute("zune:navigate?appid=appab3f9c1b-68bc-43fe-ac24-231ef3d92122",false);
+							break;
+						default:
+							s3eOSExecExecute("http://www.windowsphone.com/s?appid=ab3f9c1b-68bc-43fe-ac24-231ef3d92122",false);
+							break;
+					}
+					delay = 30;
+				}
+			}
+			else if (s3ePointerGetX()>=settings_pos.x && s3ePointerGetX()<=settings_pos.x+button_size.x &&
+				s3ePointerGetY()>=settings_pos.y && s3ePointerGetY()<=settings_pos.y+button_size.y)
+			{
+				if(delay == 0)
+				{
+					page = -2;
+					delay = 30;
+				}
+			}
+			else if (s3ePointerGetX()>=about_pos.x && s3ePointerGetX()<=about_pos.x+button_size.x &&
+				s3ePointerGetY()>=about_pos.y && s3ePointerGetY()<=about_pos.y+button_size.y)
+			{
+				if(delay == 0)
+				{
+					page = -3;
+					delay = 30;
+				}
 			}
 		}
 	}
@@ -527,12 +714,35 @@ void gamePlay::update_main_page()
 
 void gamePlay::draw_main_page()
 {
-	Iw2DDrawImage(getresource->get_spacecraft(sc_sel),sc_pos,sc_size);
-	Iw2DDrawImage(getresource->get_exhaust(),exhaust_pos,exhaust_size[exhaust_sel]);
+	if (page == 0)
+	{
+		Iw2DDrawImage(getresource->get_spacecraft(sc_sel),sc_pos,sc_size);
+		Iw2DDrawImage(getresource->get_exhaust(),exhaust_pos,exhaust_size[exhaust_sel]);
+	}
 	
 	if(trans == 0)
 	{
-		Iw2DDrawString("Tap to Start",CIwFVec2(0,Iw2DGetSurfaceHeight()*0.65f),CIwFVec2((float)Iw2DGetSurfaceWidth(),30),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+		if(page==0)
+		{
+			Iw2DDrawString("TAP",CIwFVec2(0,Iw2DGetSurfaceHeight()*0.40f-font_size),CIwFVec2((float)Iw2DGetSurfaceWidth(),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+			Iw2DDrawString("to START",CIwFVec2(0,Iw2DGetSurfaceHeight()*0.60f),CIwFVec2((float)Iw2DGetSurfaceWidth(),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+			Iw2DDrawImage(getresource->get_settings(),settings_pos,button_size);
+			if(music == 0)
+			{
+				Iw2DDrawImageRegion(getresource->get_sound_key(),sound_pos,button_size,CIwFVec2(200,0),CIwFVec2(100,98));
+			}
+			else if(music == 1)
+			{
+				Iw2DDrawImageRegion(getresource->get_sound_key(),sound_pos,button_size,CIwFVec2(0,0),CIwFVec2(100,98));
+			}
+			else
+			{
+				Iw2DDrawImageRegion(getresource->get_sound_key(),sound_pos,button_size,CIwFVec2(100,0),CIwFVec2(100,98));
+			}
+		}
+		Iw2DDrawImage(getresource->get_about_us(),about_pos,button_size);
+		Iw2DDrawImage(getresource->get_rate_us(),rate_pos,button_size);
+			
 	}
 
 	Iw2DDrawImageRegion(getresource->get_bonus_star(),CIwFVec2(Iw2DGetSurfaceWidth()*0.005f,Iw2DGetSurfaceHeight()*0.005f),CIwFVec2(Iw2DGetSurfaceHeight()*0.05f,Iw2DGetSurfaceHeight()*0.05f),CIwFVec2((float)bstar_x,(float)bstar_y),CIwFVec2(50,50));
@@ -543,7 +753,7 @@ void gamePlay::draw_main_page()
 	sprintf(str,"Highscore : %.0f",high_score);
 	Iw2DDrawString(str,score_pos,score_size,IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
 
-	Iw2DDrawImage(getresource->get_spacecraft(1),CIwFVec2(Iw2DGetSurfaceWidth()*0.5f-Iw2DGetSurfaceHeight()*0.05f*0.99f,Iw2DGetSurfaceHeight()*0.005f),CIwFVec2(Iw2DGetSurfaceHeight()*0.05f*0.99f,Iw2DGetSurfaceHeight()*0.05f));
+	Iw2DDrawImage(getresource->get_spacecraft(0),CIwFVec2(Iw2DGetSurfaceWidth()*0.5f-Iw2DGetSurfaceHeight()*0.05f*0.99f,Iw2DGetSurfaceHeight()*0.005f),CIwFVec2(Iw2DGetSurfaceHeight()*0.05f*0.99f,Iw2DGetSurfaceHeight()*0.05f));
 	sprintf(str,"X %.0f",lives);
 	Iw2DDrawString(str,lives_pos,lives_size,IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
 
@@ -555,23 +765,16 @@ void gamePlay::draw_main_page()
 }
 
 //---------------------------------------------PAUSE PAGE------------------------------------------
+//---------------------------------------------------------------------------------------------------------
 
 void gamePlay::ini_pause_page()
 {
-	sound_pos.y = home_pos.y = continue_pos.y = Iw2DGetSurfaceHeight()*0.50f - button_size.y/2;
-
-	continue_pos.x = Iw2DGetSurfaceWidth()*0.50f - button_size.x/2;
-	home_pos.x = (Iw2DGetSurfaceWidth()*0.50f+Iw2DGetSurfaceWidth()*0.15f)/2 - button_size.x/2;
-	sound_pos.x = (Iw2DGetSurfaceWidth()*0.85f+Iw2DGetSurfaceWidth()*0.50f)/2 - button_size.x/2;
-	if (music != 2)
-	{
-		s3eAudioPause();
-	}
+	
 }
 
 void gamePlay::draw_pause_page()
 {
-	Iw2DDrawImage(getresource->get_panel(),panel_pos,panel_size);
+	//Iw2DDrawImage(getresource->get_panel(),panel_pos,panel_size);
 	Iw2DDrawImage(getresource->get_home(),home_pos,button_size);
 	Iw2DDrawImage(getresource->get_resume(),continue_pos,button_size);
 	if(music == 0)
@@ -602,6 +805,7 @@ void gamePlay::update_pause_page()
 		{
 			blast = 0;
 			page = 0;
+			delay = 30;
 			ini_main_page();
 			ini_play_page();
 		}
@@ -616,27 +820,237 @@ void gamePlay::update_pause_page()
 			if(music == 0 && delay == 0)
 			{
 				music = 1;
-				CIwSoundSpec* SoundSpec = (CIwSoundSpec*)getresource->Effects->GetResNamed("star", IW_SOUND_RESTYPE_SPEC);
-				CIwSoundInst* SoundInstance = SoundSpec->Play();
-				delay = 50;
+				CIwSoundInst* SoundInstance = Star_sound->Play();
+				delay = 30;
 			}
 			else if(music == 1 && delay == 0)
 			{
 				music = 2;
-				s3eAudioPlay("sound/bg.mp3",1);
-				delay = 50;
+				s3eAudioSetInt(S3E_AUDIO_VOLUME,S3E_AUDIO_MAX_VOLUME);
+				delay = 30;
 			}
 			else if(music == 2 && delay == 0)
 			{
 				music = 0;
-				s3eAudioStop();
-				delay = 50;
+				s3eAudioSetInt(S3E_AUDIO_VOLUME,0);
+				delay = 30;
+			}
+		}
+	}
+}
+
+//---------------------------------------------ABOUT PAGE-------------------------------------------
+//------------------------------------------------------------------------------------------------------
+
+void gamePlay::ini_about_page()
+{
+	
+}
+
+void gamePlay::update_about_page()
+{
+	if(s3eKeyboardGetState(s3eKeyBack) & S3E_KEY_STATE_PRESSED)
+	{
+		page = 0;
+		s3eKeyboardClearState();
+	}
+}
+
+void gamePlay::draw_about_page()
+{
+	Iw2DDrawImage(getresource->get_panel(),main_panel_pos,main_panel_size);
+	Iw2DDrawString("About",CIwFVec2(0,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2((float)Iw2DGetSurfaceWidth(),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+	Iw2DFillRect(CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.10f+0.99f*font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.80f,5));
+	Iw2DDrawString("Game screen is horizontally divided in TWO HALVES",CIwFVec2(0,Iw2DGetSurfaceHeight()*0.10f+font_size),CIwFVec2((float)Iw2DGetSurfaceWidth(),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+	Iw2DDrawString("Touch UPPER HALF to move plane UPWARDS",CIwFVec2(0,Iw2DGetSurfaceHeight()*0.10f+2*font_size),CIwFVec2((float)Iw2DGetSurfaceWidth(),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+	Iw2DDrawString("Touch LOWER HALF to move plane DOWNWARDS",CIwFVec2(0,Iw2DGetSurfaceHeight()*0.10f+3*font_size),CIwFVec2((float)Iw2DGetSurfaceWidth(),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+	Iw2DFillRect(CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.10f+0.99f*(3*font_size)),CIwFVec2(Iw2DGetSurfaceWidth()*0.80f,5));
+	Iw2DDrawString("Power-Ups",CIwFVec2(0,Iw2DGetSurfaceHeight()*0.10f+4*font_size),CIwFVec2((float)Iw2DGetSurfaceWidth(),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+	Iw2DDrawString("",CIwFVec2(0,Iw2DGetSurfaceHeight()*0.10f+7*font_size),CIwFVec2((float)Iw2DGetSurfaceWidth(),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+	/*Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.30f,main_panel_pos.y+Iw2DGetSurfaceHeight()*0.10f+font_size),CIwFVec2(font_size,font_size),CIwFVec2(0,0),CIwFVec2(50,50));
+	Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.30f,main_panel_pos.y+Iw2DGetSurfaceHeight()*0.10f+2*font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,0),CIwFVec2(50,50));
+	Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.30f,main_panel_pos.y+Iw2DGetSurfaceHeight()*0.10f+3*font_size),CIwFVec2(font_size,font_size),CIwFVec2(100,0),CIwFVec2(50,50));
+	Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.30f,main_panel_pos.y+Iw2DGetSurfaceHeight()*0.10f+4*font_size),CIwFVec2(font_size,font_size),CIwFVec2(150,0),CIwFVec2(50,50));
+	Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.30f,main_panel_pos.y+Iw2DGetSurfaceHeight()*0.10f+5*font_size),CIwFVec2(font_size,font_size),CIwFVec2(0,50),CIwFVec2(50,50));
+	Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.30f,main_panel_pos.y+Iw2DGetSurfaceHeight()*0.10f+6*font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
+	Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.30f,main_panel_pos.y+Iw2DGetSurfaceHeight()*0.10f+7*font_size),CIwFVec2(font_size,font_size),CIwFVec2(100,50),CIwFVec2(50,50));
+	Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.30f,main_panel_pos.y+Iw2DGetSurfaceHeight()*0.10f+8*font_size),CIwFVec2(font_size,font_size),CIwFVec2(150,50),CIwFVec2(50,50));
+	*/
+}
+
+//-------------------------------------------PERSONALIZE PAGE-------------------------------------------
+//------------------------------------------------------------------------------------------------------
+
+void gamePlay::ini_personalize_page()
+{
+
+}
+
+void gamePlay::update_personalize_page()
+{
+	if(s3eKeyboardGetState(s3eKeyBack) & S3E_KEY_STATE_PRESSED)
+	{
+		page = 0;
+		subpage = 0;
+		switch (sc_sel)
+		{
+			case 0:	
+				sc_size.y = Iw2DGetSurfaceHeight()*0.20f;
+				sc_size.x = sc_size.y*0.74f;
+				break;
+			case 1:
+				sc_size.y = Iw2DGetSurfaceHeight()*0.20f;
+				sc_size.x = sc_size.y*1.2f;
+				break;
+			case 2:
+				sc_size.y = Iw2DGetSurfaceHeight()*0.20f;
+				sc_size.x = sc_size.y*1.2f;
+				break;
+			case 3:
+				sc_size.y = Iw2DGetSurfaceHeight()*0.20f;
+				sc_size.x = sc_size.y;
+				break;
+			case 4:
+				sc_size.y = Iw2DGetSurfaceHeight()*0.20f;
+				sc_size.x = sc_size.y*1.2f;
+				break;
+			case 5:
+				sc_size.y = Iw2DGetSurfaceHeight()*0.20f;
+				sc_size.x = sc_size.y;
+				break;
+		}
+		sc_pos.x = Iw2DGetSurfaceWidth()*0.5f - sc_size.x*0.5f;
+		sc_pos.y = Iw2DGetSurfaceHeight()*0.5f - sc_size.y*0.5f;
+		s3eKeyboardClearState();
+	}
+	switch (subpage)
+	{
+		case 0:
+			if( (s3ePointerGetState(S3E_POINTER_BUTTON_SELECT) & S3E_POINTER_STATE_DOWN))
+			{
+				if(s3ePointerGetX() >= home_pos.x && s3ePointerGetX() <= home_pos.x+button_size.x &&
+					s3ePointerGetY() >= home_pos.y && s3ePointerGetY() <= home_pos.y+button_size.y)
+				{
+					if(delay == 0)
+					{
+						subpage = 1;
+						delay = 30;
+					}
+				}
+				else if(s3ePointerGetX() >= continue_pos.x && s3ePointerGetX() <= continue_pos.x+button_size.x &&
+					s3ePointerGetY() >= continue_pos.y && s3ePointerGetY() <= continue_pos.y+button_size.y)
+				{
+					if (delay == 0)
+					{
+						subpage = 2;
+						delay = 30;
+					}
+				}
+				else if(s3ePointerGetX() >= sound_pos.x && s3ePointerGetX() <= sound_pos.x+button_size.x &&
+					s3ePointerGetY() >= sound_pos.y && s3ePointerGetY() <= sound_pos.y+button_size.y)
+				{
+					if (delay == 0)
+					{
+						subpage = 3;
+						delay = 30;
+					}
+				}
+			}
+			break;
+		case 1:
+			if( (s3ePointerGetState(S3E_POINTER_BUTTON_SELECT) & S3E_POINTER_STATE_DOWN))
+			{
+				for (int i = 0; i < 6; i++)
+				{
+					if(s3ePointerGetX() >= spacecraft_set_pos[i].x && s3ePointerGetX() <= spacecraft_set_pos[i].x+spacecraft_set_size.x &&
+						s3ePointerGetY() >= spacecraft_set_pos[i].y && s3ePointerGetY() <= spacecraft_set_pos[i].y+spacecraft_set_size.y)
+					{
+						if(sc_locked[i] == 1)
+						{
+							switch (i)
+							{
+								case 1:
+									if(total_star>=5000)
+									{
+										total_star-=5000;
+										sc_locked[i] = 0;
+										sc_sel = i;
+									}
+									break;
+								case 2:
+									if(total_star>=10000)
+									{
+										total_star-=10000;
+										sc_locked[i] = 0;
+										sc_sel = i;
+									}
+									break;
+								case 3:
+									if(total_star>=20000)
+									{
+										total_star-=20000;
+										sc_locked[i] = 0;
+										sc_sel = i;
+									}
+									break;
+								case 4:
+									if(total_star>=30000)
+									{
+										total_star-=30000;
+										sc_locked[i] = 0;
+										sc_sel = i;
+									}
+									break;
+								case 5:
+									if(total_star>=50000)
+									{
+										total_star-=50000;
+										sc_locked[i] = 0;
+										sc_sel = i;
+									}
+									break;
+							}
+						}
+						else if(sc_locked[i] == 0 && sc_sel != i)
+						{
+							sc_sel = i;
+						}
+					}
+				}
+			}
+			break;
+		case 2:
+			break;
+		case 3:
+			break;
+	}
+}
+
+void gamePlay::draw_personalize_page()
+{
+	if(subpage == 0)
+	{
+		//Iw2DDrawImage(getresource->get_panel(),panel_pos,panel_size);
+		Iw2DDrawImageRegion(getresource->get_menu(),home_pos,button_size,CIwFVec2(0,0),CIwFVec2(100,100));
+		Iw2DDrawImageRegion(getresource->get_menu(),continue_pos,button_size,CIwFVec2(100,0),CIwFVec2(100,100));
+		Iw2DDrawImageRegion(getresource->get_menu(),sound_pos,button_size,CIwFVec2(200,0),CIwFVec2(100,100));
+	}
+	else if (subpage == 1)
+	{
+		Iw2DDrawImage(getresource->get_panel(),main_panel_pos,main_panel_size);
+		for (int i = 0; i < 6; i++)
+		{
+			Iw2DDrawImageRegion(getresource->get_spacecraft_set(),spacecraft_set_pos[i],spacecraft_set_size,CIwFVec2(i<3?i*200:(i-3)*200,i<3?0:200),CIwFVec2(200,200));
+			if(sc_locked[i]==1)
+			{
+				Iw2DDrawImageRegion(getresource->get_spacecraft_locked(),spacecraft_set_pos[i],spacecraft_set_size,CIwFVec2((i-1)*200,0),CIwFVec2(200,200));
 			}
 		}
 	}
 }
 
 //----------------------------------------------PLAY PAGE-------------------------------------------
+//---------------------------------------------------------------------------------------------------------
 
 void gamePlay::ini_play_page()
 {
@@ -785,8 +1199,7 @@ void gamePlay::update_play_page()
 				b_y = 0;
 				if(music!=0)
 				{
-					CIwSoundSpec* SoundSpec = (CIwSoundSpec*)getresource->Effects->GetResNamed("explosion", IW_SOUND_RESTYPE_SPEC);
-					CIwSoundInst* SoundInstance = SoundSpec->Play();
+					CIwSoundInst* SoundInstance = Explosion_sound->Play();
 				}
 			}
 		}
@@ -801,14 +1214,13 @@ void gamePlay::update_play_page()
 				b_y = 0;
 				if(music!=0)
 				{
-					CIwSoundSpec* SoundSpec = (CIwSoundSpec*)getresource->Effects->GetResNamed("explosion", IW_SOUND_RESTYPE_SPEC);
-					CIwSoundInst* SoundInstance = SoundSpec->Play();
+					CIwSoundInst* SoundInstance = Explosion_sound->Play();
 				}
 			}
 
 			//-----------energy absorption-----------------
 
-			if (star_compare(sc_pos,reenergy_pos[i],sc_size,reenergy_size) && reenergy_show[i] == 1)
+			if (power_compare(sc_pos,reenergy_pos[i],sc_size,reenergy_size) && reenergy_show[i] == 1)
 			{
 				reenergy_show[i] = 0;
 				reenergy = 1;//energy = 500;
@@ -867,8 +1279,7 @@ void gamePlay::update_play_page()
 				star++;
 				if(music!=0)
 				{
-					CIwSoundSpec* SoundSpec = (CIwSoundSpec*)getresource->Effects->GetResNamed("star", IW_SOUND_RESTYPE_SPEC);
-					CIwSoundInst* SoundInstance = SoundSpec->Play();
+					CIwSoundInst* SoundInstance = Star_sound->Play();
 				}
 			}
 		}
@@ -1016,6 +1427,7 @@ void gamePlay::update_play_page()
 			}
 			total_star += star;
 			blast = 0;
+			delay = 30;
 			page = 0;
 			ini_main_page();
 			ini_play_page();
@@ -1157,7 +1569,7 @@ void gamePlay::draw_play_page()
 	sprintf(str,"Score : %.0f",score);
 	Iw2DDrawString(str,score_pos,score_size,IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
 
-	Iw2DDrawImage(getresource->get_spacecraft(1),CIwFVec2(Iw2DGetSurfaceWidth()*0.5f-Iw2DGetSurfaceHeight()*0.05f*0.99f,Iw2DGetSurfaceHeight()*0.005f),CIwFVec2(Iw2DGetSurfaceHeight()*0.05f*0.99f,Iw2DGetSurfaceHeight()*0.05f));
+	Iw2DDrawImage(getresource->get_spacecraft(0),CIwFVec2(Iw2DGetSurfaceWidth()*0.5f-Iw2DGetSurfaceHeight()*0.05f*0.99f,Iw2DGetSurfaceHeight()*0.005f),CIwFVec2(Iw2DGetSurfaceHeight()*0.05f*0.99f,Iw2DGetSurfaceHeight()*0.05f));
 	sprintf(str,"X %.0f",lives);
 	Iw2DDrawString(str,lives_pos,lives_size,IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
 
@@ -1273,8 +1685,16 @@ void gamePlay::draw_play_page()
 
 	if(lives == 0 || energy <= 0)
 	{
-		sprintf(str,"GAME OVER | Your Score is : %.0f",score);
-		Iw2DDrawString(str,CIwFVec2(0,Iw2DGetSurfaceHeight()*0.5f-15),CIwFVec2((float)Iw2DGetSurfaceWidth(),30),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+		if(score>high_score)
+		{
+			sprintf(str,"GAME OVER\n\nCongratulations New Highscore : %.0f",score);
+		}
+		else
+		{
+			sprintf(str,"GAME OVER\n\nScore : %.0f",score);
+		}
+		
+		Iw2DDrawString(str,CIwFVec2(0,Iw2DGetSurfaceHeight()*0.5f-font_size/2),CIwFVec2((float)Iw2DGetSurfaceWidth(),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
 	}
 }
 
@@ -1647,6 +2067,11 @@ void gamePlay::sequence_12(int x)
 	reenergy_pos[x].y = Iw2DGetSurfaceHeight()*0.50f-reenergy_size.y/2;
 
 	power_pos[x].y = Iw2DGetSurfaceHeight()*0.75f-power_size.y/2;
+}
+
+void gamePlay::set_page()
+{
+	page = -1;
 }
 
 gamePlay *newgame = 0;

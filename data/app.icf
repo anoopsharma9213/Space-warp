@@ -30,7 +30,7 @@ MemSizeDebug=30000000
 MaxBatch=2000
 
 [GX]
-DataCacheSize=50000
+DataCacheSize=70000
 
 [SOUND]
 MaxChannels=16

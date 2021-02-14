@@ -21,6 +21,11 @@ Resources::Resources()
 	
 	spacecraft[0] = Iw2DCreateImageResource("spacecraft_1");
 	spacecraft[1] = Iw2DCreateImageResource("spacecraft_2");
+	spacecraft[2] = Iw2DCreateImageResource("spacecraft_3");
+	spacecraft[3] = Iw2DCreateImageResource("spacecraft_4");
+	spacecraft[4] = Iw2DCreateImageResource("spacecraft_5");
+	spacecraft[5] = Iw2DCreateImageResource("spacecraft_6");
+
 	exhaust = Iw2DCreateImageResource("exhaust");
 	energy = Iw2DCreateImageResource("energy");
 	bonus_star = Iw2DCreateImageResource("bonus_star");
@@ -40,7 +45,22 @@ Resources::Resources()
 	resume = Iw2DCreateImageResource("continue");
 	sound_key = Iw2DCreateImageResource("sound_key");
 
-	font = Iw2DCreateFontResource("viner26_white");
+	rate_us = Iw2DCreateImageResource("rate_us");
+	about_us = Iw2DCreateImageResource("about_us");
+
+	spacecraft_locked = Iw2DCreateImageResource("spacecraft_locked");
+	spacecraft_set = Iw2DCreateImageResource("spacecraft_set");
+
+	menu = Iw2DCreateImageResource("menu");
+
+	if(Iw2DGetSurfaceHeight()>=720)
+	{
+		font = Iw2DCreateFontResource("manteka26_white");
+	}
+	else
+	{
+		font = Iw2DCreateFontResource("manteka12_white");
+	}	
 }
 
 Resources::~Resources()
@@ -51,8 +71,11 @@ Resources::~Resources()
 	delete planet_3;
 	delete planet_5;
 	
-	delete spacecraft[0];
-	delete spacecraft[1];
+	for (int i = 0; i < 6; i++)
+	{
+		delete spacecraft[i];
+	}
+
 	delete exhaust;
 	delete energy;
 	delete bonus_star;
@@ -72,6 +95,12 @@ Resources::~Resources()
 	delete sound_key;
 	delete home;
 	delete resume;
+	delete rate_us;
+	delete about_us;
+
+	delete spacecraft_locked;
+	delete spacecraft_set;
+	delete menu;
 
 	delete font;
 

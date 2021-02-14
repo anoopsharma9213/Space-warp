@@ -12,6 +12,13 @@ CIwResGroup
 
 	"design/spacecraft_1.png"
 	"design/spacecraft_2.png"
+	"design/spacecraft_3.png"
+	"design/spacecraft_4.png"
+	"design/spacecraft_5.png"
+	"design/spacecraft_6.png"
+
+	"design/spacecraft_locked.png"
+	"design/spacecraft_set.png"
 
 	"design/power.png"
 	"design/powerglow.png"

@@ -5,6 +5,7 @@
 #include "s3e.h"
 #include "IwResManager.h"
 #include "s3eWindowsPhoneAd.h"
+#include "s3eOSExec.h"
 #include "IwSound.h"
 
 class Resources
@@ -21,7 +22,7 @@ private:
 	
 	// Gameplay--------------------
 
-	CIw2DImage* spacecraft[5];
+	CIw2DImage* spacecraft[6];
 	CIw2DImage* power;
 	CIw2DImage* powerglow;
 	CIw2DImage *exhaust;
@@ -41,6 +42,11 @@ private:
 	CIw2DImage *home;
 	CIw2DImage *resume;
 	CIw2DImage *panel;
+	CIw2DImage *rate_us;
+	CIw2DImage *about_us;
+	CIw2DImage *spacecraft_set;
+	CIw2DImage *spacecraft_locked;
+	CIw2DImage *menu;
 
 public:
 
@@ -71,6 +77,12 @@ public:
 	CIw2DImage *get_resume()			{return resume;}
 	CIw2DImage *get_settings()			{return settings;}
 	CIw2DImage *get_panel()				{return panel;}
+	CIw2DImage *get_rate_us()			{return rate_us;}
+	CIw2DImage *get_about_us()			{return about_us;}
+
+	CIw2DImage *get_spacecraft_set()	{return spacecraft_set;}
+	CIw2DImage *get_spacecraft_locked()	{return spacecraft_locked;}
+	CIw2DImage *get_menu()				{return menu;}
 
 	Resources();
 	~Resources();
