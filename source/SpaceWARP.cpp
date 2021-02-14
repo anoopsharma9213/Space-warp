@@ -57,7 +57,7 @@ int main()
         s3eKeyboardUpdate();
 
         // S3E applications should yield frequently
-        s3eDeviceYield(0);
+        s3eDeviceYield();
     }
 	delete getresource;
 	delete newgame;

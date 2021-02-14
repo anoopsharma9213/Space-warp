@@ -23,7 +23,7 @@ private:
 	CIw2DImage* spacecraft[5];
 	CIw2DImage *exhaust;
 	
-	CIw2DImage *astroid;
+	CIw2DImage *astroid[3];
 	CIw2DImage *comet;
 	CIw2DImage *explosion;
 
@@ -43,7 +43,7 @@ public:
 	CIw2DImage *get_spacecraft(int a)	{return spacecraft[a];}
 	CIw2DImage *get_exhaust()			{return exhaust;}
 
-	CIw2DImage *get_astroid()			{return astroid;}
+	CIw2DImage *get_astroid(int a)			{return astroid[a];}
 	CIw2DImage *get_comet()				{return comet;}
 	CIw2DImage *get_explosion()			{return explosion;}
 

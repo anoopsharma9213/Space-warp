@@ -2,7 +2,9 @@ CIwResGroup
 {
 	name Gameplay
 
-	"design/astroid.png"
+	"design/astroid_1.png"
+	"design/astroid_2.png"
+	"design/astroid_3.png"
 	"design/comet.png"
 	"design/explosion.png"
 	"design/bonus_star.png"

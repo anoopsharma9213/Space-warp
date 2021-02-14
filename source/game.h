@@ -18,10 +18,14 @@ private:
 	CIwFVec2 p_pos[5], p_size[5], cp_pos, cp_size;
 	int p_type[5], cp_col;
 
+	//-----Main Page----------------
+
+	int trans;
 
 	//-----SpaceCraft---------------
 	CIwFVec2 sc_pos, sc_size;
-	int enable_move;
+	CIwFVec2 exhaust_pos, exhaust_size[3];
+	int exhaust_sel;
 
 	CIwFVec2 bstar_pos[12], bstar_size;
 	int bstar_x, bstar_y, bstar_i;
@@ -30,7 +34,7 @@ private:
 	int com_x, com_i;
 
 	CIwFVec2 ast_pos[8], ast_size;
-	int ast_x, ast_i;
+	int ast_x, ast_i, ast_s[8];
 
 	int blast, b_x, b_y;
 	int sequence;
