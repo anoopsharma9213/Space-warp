@@ -9,6 +9,9 @@ void gamePlay::Update()
 			_store->score = high_score;
 			_store->star = total_star;
 			_store->m = music;
+			_store->mw = megawarp;
+			_store->sc = sc_sel;
+
 			s3eSecureStoragePut(_store,sizeof(struct save));
 			s3eAudioStop();
 			s3eDeviceRequestQuit();
@@ -106,17 +109,27 @@ gamePlay::gamePlay()
 		high_score = _store->score;
 		total_star = _store->star;
 		music = _store->m;
+		sc_sel = _store->sc;
+		megawarp = _store->mw;
 	}
 	else
 	{
 		high_score = 0;
 		total_star = 0;
 		music = 1;
+		sc_sel = 0;
+		megawarp = 1;
 	}
 
 	power_time[0] = 10;
 	power_time[2] = power_time[1] = 6;
 	power_time[3] = 30;
+
+	max_lives[0] = 3;
+	max_lives[1] = 3;
+	max_lives[2] = 4;
+	max_lives[3] = 5;
+	max_lives[4] = 2;
 
 	if (music == 1)
 	{
@@ -412,18 +425,19 @@ void gamePlay::ini_main_page()
 	score_pos.x = Iw2DGetSurfaceWidth()*0.70f;
 	score_pos.y = star_pos.y;
 
-	lives = 3;
+	lives = max_lives[sc_sel];
 	lives_size = star_size;
 	lives_pos.x = Iw2DGetSurfaceWidth()*0.50f+Iw2DGetSurfaceHeight()*0.005f;
 	lives_pos.y = star_pos.y;
 
 	energy = 500;
-	energy_size.x = Iw2DGetSurfaceWidth()*0.0003f*energy;
+	energy_size.x = Iw2DGetSurfaceWidth()*0.0004f*energy;
 	energy_size.y = lives_size.y/2;
 	energy_pos.x = star_pos.x;
 	energy_pos.y = Iw2DGetSurfaceHeight()*0.05f*1.5f+2*(Iw2DGetSurfaceHeight()*0.005f)-energy_size.y/2;
 
 	reenergy_size.y = reenergy_size.x = Iw2DGetSurfaceHeight()*0.08f;
+	reenergy = 0;
 
 	power = 0;
 	power_avail = 6;
@@ -432,6 +446,11 @@ void gamePlay::ini_main_page()
 	powerglow_size.y = powerglow_size.x = Iw2DGetSurfaceHeight()*0.30f;
 	powerglow_pos.x = Iw2DGetSurfaceWidth()*0.5f - powerglow_size.x*0.5f;
 	powerglow_pos.y = Iw2DGetSurfaceHeight()*0.5f - powerglow_size.y*0.5f;
+
+	mega_active = megawarp==0?0:1;
+	megawarp_size = star_size;
+	megawarp_pos.x = Iw2DGetSurfaceHeight()*0.10f+2*(Iw2DGetSurfaceWidth()*0.005f);
+	megawarp_pos.y = Iw2DGetSurfaceHeight()*0.90f+Iw2DGetSurfaceHeight()*0.10f-megawarp_size.y;
 }
 
 void gamePlay::update_main_page()
@@ -486,7 +505,7 @@ void gamePlay::update_main_page()
 
 void gamePlay::draw_main_page()
 {
-	Iw2DDrawImage(getresource->get_spacecraft(1),sc_pos,sc_size);
+	Iw2DDrawImage(getresource->get_spacecraft(sc_sel),sc_pos,sc_size);
 	Iw2DDrawImage(getresource->get_exhaust(),exhaust_pos,exhaust_size[exhaust_sel]);
 	
 	if(trans == 0)
@@ -603,7 +622,22 @@ void gamePlay::update_play_page()
 
 		if( (s3ePointerGetState(S3E_POINTER_BUTTON_SELECT) & S3E_POINTER_STATE_DOWN))
 		{
-			if(s3ePointerGetY() < Iw2DGetSurfaceHeight()*0.5f)
+			if(s3ePointerGetX()>=0 && 
+				s3ePointerGetX()<= Iw2DGetSurfaceHeight()*0.20f &&
+				s3ePointerGetY()>=Iw2DGetSurfaceHeight()*0.85f &&
+				s3ePointerGetY()<=Iw2DGetSurfaceHeight()*0.85f+Iw2DGetSurfaceHeight()*0.15f &&
+				mega_active == 1)
+			{
+				power = 4;
+				power_on_time = power_time[3];
+				power_avail = power_time[3]+6;
+				power_down = 0;
+				t_speed = l_speed;
+				l_speed = g_speed+15;
+				megawarp--;
+				mega_active = 0;
+			}
+			else if(s3ePointerGetY() < Iw2DGetSurfaceHeight()*0.5f)
 			{
 				if(sc_pos.y > Iw2DGetSurfaceHeight()*0.25f-sc_size.y/2)
 				{
@@ -623,7 +657,7 @@ void gamePlay::update_play_page()
 		
 		//---------score calculation------------------
 
-		score++;
+		score += l_speed;
 
 		//----------exhaust animation----------------
 
@@ -638,7 +672,7 @@ void gamePlay::update_play_page()
 		for (int i = 0; i < 8; i++)
 		{
 			//----------------astroid collison---------
-			if (compare(sc_pos,ast_pos[i],sc_size,ast_size) && ast_show[i]==1 && !(power == 1 && power_on_time!=0) && !(power == 3 && power_on_time!=0))
+			if (compare(sc_pos,ast_pos[i],sc_size,ast_size) && ast_show[i]==1 && !(power == 1 && power_on_time!=0) && !(power == 3 && power_on_time!=0) && !(power == 4 && power_on_time!=0))
 			{
 				ast_show[i] = 0;
 				blast=1;
@@ -652,7 +686,7 @@ void gamePlay::update_play_page()
 		{
 			//-----------------comet collison----------
 
-			if (com_compare(sc_pos,com_pos[i],sc_size,com_size) && !(power == 1 && power_on_time!=0) && !(power == 3 && power_on_time!=0))
+			if (com_compare(sc_pos,com_pos[i],sc_size,com_size) && !(power == 1 && power_on_time!=0) && !(power == 3 && power_on_time!=0) && !(power == 4 && power_on_time!=0))
 			{
 				blast=1;
 				b_x = 0;
@@ -666,19 +700,48 @@ void gamePlay::update_play_page()
 			if (star_compare(sc_pos,reenergy_pos[i],sc_size,reenergy_size) && reenergy_show[i] == 1)
 			{
 				reenergy_show[i] = 0;
-				energy = 500;
+				reenergy = 1;//energy = 500;
 			}
 
 			if (power_compare(sc_pos,power_pos[i],sc_size,power_size) && power_show[i] == 1)
 			{
-				power_avail = power_time[power-1]+6;
-				power_show[i] = 0;
-				power_on_time = power_time[power-1];
-
-				if(power == 1)
+				if(power == 1|| power == 2 || power == 3)
 				{
-					t_speed = l_speed;
-					l_speed = g_speed+15;
+					power_avail = power_time[power-1]+6;
+					power_show[i] = 0;
+					power_on_time = power_time[power-1];
+					power_down = 0;
+	
+					if(power == 1)
+					{
+						t_speed = l_speed;
+						l_speed = g_speed+15;
+					}
+				}
+				else
+				{
+					switch (power)
+					{
+						case 4:
+							megawarp++;
+							break;
+						case 5:
+							if(lives < max_lives[sc_sel])
+							{
+								lives++;
+							}
+							break;
+						case 6:
+							star+=100;
+							break;
+						case 7:
+							star+=500;
+							break;
+						case 8:
+							star+=1000;
+							break;
+					}
+					power_show[i] = 0;
 				}
 			}
 		}
@@ -743,7 +806,7 @@ void gamePlay::update_play_page()
 			if(power_on_time != 0)
 			{
 				power_on_time--;
-				if(power_on_time == 0 && power == 1)
+				if(power_on_time == 0 && (power == 1||power == 4))
 				{
 					l_speed = t_speed;
 					ini_play_page();
@@ -752,7 +815,8 @@ void gamePlay::update_play_page()
 
 			if(power_avail == 0)
 			{
-				power = IwRandRange(3)+1;
+				int x = IwRandRange(100)+1;
+				power = x%50==0?8:(x%25==0?7:(x%12==0?5:(x%7==0?4:(x%5==0?6:(x%4==0?3:IwRandRange(3)+1)))));
 				power_show[sequence] = 1;
 				power_avail = 6;
 			}
@@ -765,9 +829,20 @@ void gamePlay::update_play_page()
 		
 		//----------------------energy decrease control---------------
 
-		if(!(power == 1 && power_on_time!=0))
+		if(!(power == 1 && power_on_time!=0) && !(power == 4 && power_on_time!=0))
 		{
-			energy -= (int)(l_speed*0.3f);
+			if(reenergy == 1)
+			{
+				energy += (int)(l_speed*2.0f);
+				if(energy >= 500)
+				{
+					reenergy = 0;
+				}
+			}
+			else
+			{
+				energy -= (int)(l_speed*0.3f);
+			}
 		}
 
 		//--------------comet animation---------------------
@@ -906,10 +981,10 @@ void gamePlay::draw_play_page()
 {
 	if(blast == 0 && energy > 0)
 	{
-		Iw2DDrawImage(getresource->get_spacecraft(0),sc_pos,sc_size);
+		Iw2DDrawImage(getresource->get_spacecraft(sc_sel),sc_pos,sc_size);
 		Iw2DDrawImage(getresource->get_exhaust(),exhaust_pos,exhaust_size[exhaust_sel]);
 
-		if(!(power == 1 && power_on_time!=0))
+		if(!(power == 1 && power_on_time!=0) && !(power == 4 && power_on_time!=0))
 		{
 			for (int i = 0; i < 2; i++)
 			{
@@ -925,7 +1000,7 @@ void gamePlay::draw_play_page()
 		Iw2DDrawImageRegion(getresource->get_explosion(),sc_pos,CIwFVec2(sc_size.y*1.33f,sc_size.y),CIwFVec2((float)b_x,(float)b_y),CIwFVec2(100,75));
 	}
 
-	if(!(power == 1 && power_on_time!=0))
+	if(!(power == 1 && power_on_time!=0) && !(power == 4 && power_on_time!=0))
 	{
 		for (int i = 0; i < 8; i++)
 		{
@@ -972,6 +1047,19 @@ void gamePlay::draw_play_page()
 	sprintf(str,"X %.0f",lives);
 	Iw2DDrawString(str,lives_pos,lives_size,IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
 
+	if(mega_active == 1)
+	{
+		Iw2DSetColour(0xffffffff);
+	}
+	else
+	{
+		Iw2DSetColour(0x77ffffff);
+	}
+	Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(0,Iw2DGetSurfaceHeight()*0.90f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(150,0),CIwFVec2(50,50));
+	Iw2DSetColour(0xffffffff);
+	sprintf(str,"X %d",megawarp);
+	Iw2DDrawString(str,megawarp_pos,megawarp_size,IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+
 	Iw2DDrawImage(getresource->get_energy(),CIwFVec2(Iw2DGetSurfaceWidth()*0.005f,Iw2DGetSurfaceHeight()*0.05f+2*(Iw2DGetSurfaceHeight()*0.005f)),CIwFVec2(Iw2DGetSurfaceHeight()*0.05f,Iw2DGetSurfaceHeight()*0.05f));
 	if (energy < 150)
 	{
@@ -986,11 +1074,11 @@ void gamePlay::draw_play_page()
 		Iw2DSetColour(0xff00ff00);
 	}
 
-	Iw2DFillRect(energy_pos,CIwFVec2(Iw2DGetSurfaceWidth()*0.0003f*energy,energy_size.y));
+	Iw2DFillRect(energy_pos,CIwFVec2(Iw2DGetSurfaceWidth()*0.0004f*energy,energy_size.y));
 	Iw2DSetColour(0xffffffff);
 	Iw2DDrawRect(energy_pos,energy_size);
 
-	if(!(power == 1 && power_on_time!=0))
+	if(!(power == 1 && power_on_time!=0) && !(power == 4 && power_on_time!=0))
 	{
 		for (int i = 0; i < 2; i++)
 		{
@@ -1017,6 +1105,21 @@ void gamePlay::draw_play_page()
 						case 3:
 							Iw2DDrawImageRegion(getresource->get_power(),power_pos[i],power_size,CIwFVec2(100,0),CIwFVec2(50,50));
 							break;
+						case 4:
+							Iw2DDrawImageRegion(getresource->get_power(),power_pos[i],power_size,CIwFVec2(150,0),CIwFVec2(50,50));
+							break;
+						case 5:
+							Iw2DDrawImageRegion(getresource->get_power(),power_pos[i],power_size,CIwFVec2(0,50),CIwFVec2(50,50));
+							break;
+						case 6:
+							Iw2DDrawImageRegion(getresource->get_power(),power_pos[i],power_size,CIwFVec2(50,50),CIwFVec2(50,50));
+							break;
+						case 7:
+							Iw2DDrawImageRegion(getresource->get_power(),power_pos[i],power_size,CIwFVec2(100,50),CIwFVec2(50,50));
+							break;
+						case 8:
+							Iw2DDrawImageRegion(getresource->get_power(),power_pos[i],power_size,CIwFVec2(150,50),CIwFVec2(50,50));
+							break;
 					}
 				}
 			}
@@ -1024,6 +1127,19 @@ void gamePlay::draw_play_page()
 	}
 	if(power_on_time != 0)
 	{
+		if (power_on_time <= 1)
+		{
+			if(power_down == 0)
+			{
+				power_down++;
+				Iw2DSetColour(0xffffffff);
+			}
+			else
+			{
+				power_down = 0;
+				Iw2DSetColour(0x00ffffff);
+			}
+		}
 		switch (power)
 		{
 			case 1:
@@ -1034,6 +1150,9 @@ void gamePlay::draw_play_page()
 				break;
 			case 3:
 				Iw2DDrawImageRegion(getresource->get_powerglow(),powerglow_pos,powerglow_size,CIwFVec2(0,300),CIwFVec2(300,300));
+				break;
+			case 4:
+				Iw2DDrawImageRegion(getresource->get_powerglow(),powerglow_pos,powerglow_size,CIwFVec2(300,300),CIwFVec2(300,300));
 				break;
 		}
 	}

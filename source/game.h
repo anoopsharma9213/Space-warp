@@ -11,7 +11,7 @@ private:
 	struct save
 	{
 		float star,score;
-		int m;
+		int m, sc, mw;
 	}*_store;
 
 	char str[50];
@@ -40,7 +40,7 @@ private:
 	//-----SpaceCraft---------------
 	CIwFVec2 sc_pos, sc_size;
 	CIwFVec2 exhaust_pos, exhaust_size[3];
-	int exhaust_sel;
+	int exhaust_sel, sc_sel;
 
 	CIwFVec2 bstar_pos[12], bstar_size;
 	int bstar_x, bstar_y, bstar_i, bstar_show[12];
@@ -61,18 +61,20 @@ private:
 	CIwFVec2 energy_size, energy_pos;
 
 	//------Collectibles------------
-	float star, score, lives;
+	float star, score, lives, max_lives[5];
 	float high_score, total_star;
 	CIwFVec2 star_pos, star_size, score_pos, score_size, lives_pos, lives_size;
 
 	//------Powerups and resources----
 	CIwFVec2 reenergy_pos[2], reenergy_size;
-	int reenergy_show[2];
+	int reenergy_show[2], reenergy;
 	CIwFVec2 power_pos[2], power_size, powerglow_pos, powerglow_size;
 	int power, power_show[2], power_avail, power_on_time;
+	CIwFVec2 megawarp_pos,megawarp_size;
+	int megawarp, mega_active;
 
 	//--------Powerups timer----------
-	int power_time[4];
+	int power_time[4], power_down;
 
 public:
 
