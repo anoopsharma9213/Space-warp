@@ -16,6 +16,8 @@ CIwResGroup
 	"design/ranks.png"
 	"design/star_rank.png"
 	"design/about.png"
+	"design/locked.png"
+	"design/fb.png"
 
 	"effects/explosion.wav"
 	"effects/star.wav"

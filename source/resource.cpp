@@ -2,6 +2,15 @@
 
 Resources::Resources()
 {	
+	CIw2DImage *ss = Iw2DCreateImage("Splash/splashscreen.png");
+	Iw2DSurfaceClear(0xff00ff00);
+	Iw2DSetColour(0xffffffff);
+	Iw2DDrawImage(ss,CIwFVec2(0,0),CIwFVec2((float)Iw2DGetSurfaceWidth(),(float)Iw2DGetSurfaceHeight()));
+	Iw2DSurfaceShow();
+	if(s3eDeviceGetInt(S3E_DEVICE_OS)==S3E_OS_ID_WP8)
+	{
+		Iw2DSurfaceShow();
+	}
 	IwSoundInit();
 	IwResManagerInit();
 	
@@ -12,6 +21,8 @@ Resources::Resources()
 	IwGetResManager()->LoadGroup("Resource.group");
 
 	Effects = IwGetResManager()->GetGroupNamed("Interface");
+
+	about = Iw2DCreateImageResource("about");
 
 	bg_star = Iw2DCreateImageResource("bg_star");
 	planet_1 = Iw2DCreateImageResource("planet1");
@@ -56,8 +67,11 @@ Resources::Resources()
 	ranks = Iw2DCreateImageResource("ranks");
 	power_level = Iw2DCreateImageResource("power_level");
 	star_rank = Iw2DCreateImageResource("star_rank");
-	about = Iw2DCreateImageResource("about");
+	
+	locked = Iw2DCreateImageResource("locked");
+	fb = Iw2DCreateImageResource("fb");
 
+	delete ss;
 	if(Iw2DGetSurfaceHeight()>=720)
 	{
 		font = Iw2DCreateFontResource("manteka26_white");
@@ -115,6 +129,8 @@ Resources::~Resources()
 	delete power_level;
 	delete star_rank;
 	delete about;
+	delete locked;
+	delete fb;
 
 	delete font;
 

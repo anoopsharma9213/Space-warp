@@ -41,9 +41,6 @@ assets
 	(data)
 		sound
 		Splash
-
-	(Splash)
-		splashscreen3.jpg
 	
 	(icon)
 		icon1.png

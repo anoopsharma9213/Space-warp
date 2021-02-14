@@ -52,6 +52,8 @@ private:
 	CIw2DImage *ranks;
 	CIw2DImage *star_rank;
 	CIw2DImage *about;
+	CIw2DImage *locked;
+	CIw2DImage *fb;
 
 public:
 
@@ -91,6 +93,8 @@ public:
 	CIw2DImage *get_power_level()		{return power_level;}
 	CIw2DImage *get_star_rank()			{return star_rank;}
 	CIw2DImage *get_about()				{return about;}
+	CIw2DImage *get_locked()			{return locked;}
+	CIw2DImage *get_fb()				{return fb;}
 
 	CIw2DFont *get_font()				{return font;}
 

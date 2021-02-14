@@ -29,15 +29,7 @@ int main()
     //Initialise graphics system(s)
     Iw2DInit();
 
-	CIw2DImage *ss = Iw2DCreateImage("Splash/splashscreen.png");
-	Iw2DSurfaceClear(0xff00ff00);
-	Iw2DSetColour(0xffffffff);
-	Iw2DDrawImage(ss,CIwFVec2(0,0),CIwFVec2((float)Iw2DGetSurfaceWidth(),(float)Iw2DGetSurfaceHeight()));
-	Iw2DSurfaceShow();
-	if(s3eDeviceGetInt(S3E_DEVICE_OS)==S3E_OS_ID_WP8)
-	{
-		Iw2DSurfaceShow();
-	}
+	
 	
 
     getresource = new Resources();
@@ -86,7 +78,7 @@ int main()
     }
 	delete getresource;
 	delete newgame;
-	delete ss;
+	
     Iw2DTerminate();
     
     // Return

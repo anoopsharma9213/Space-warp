@@ -12,7 +12,7 @@ private:
 	{
 		float star,score,cstar;
 		int m, sc, mw;
-		int sc_l[6], pt[4];
+		int sc_l[6], pt[4], a[10];
 	}*_store;
 
 	char str[50];
@@ -38,7 +38,7 @@ private:
 
 	int trans;
 	CIwFVec2 main_panel_pos, main_panel_size;
-	CIwFVec2 settings_pos, about_pos, rate_pos;
+	CIwFVec2 settings_pos, about_pos, rate_pos, fb_pos;
 
 	//-----SpaceCraft---------------
 	CIwFVec2 sc_pos, sc_size;
@@ -76,6 +76,8 @@ private:
 	float star, score, lives, max_lives[6], max_speed[6];
 	float high_score, total_star, collected_star;
 	CIwFVec2 star_pos, star_size, score_pos, score_size, lives_pos, lives_size;
+	CIwFVec2 achievement_pos, achievement_size;
+	int achievement_show, achievement_show_id, achievement[10];
 
 	//------Powerups and resources----
 	CIwFVec2 reenergy_pos[2], reenergy_size;
@@ -87,7 +89,6 @@ private:
 
 	//--------Powerups timer----------
 	int power_time[4], power_down;
-	int achievement[10];
 
 public:
 
@@ -106,15 +107,12 @@ public:
 	void draw_play_page();
 	void update_play_page();
 
-	void ini_pause_page();
 	void draw_pause_page();
 	void update_pause_page();
 
-	void ini_personalize_page();
 	void draw_personalize_page();
 	void update_personalize_page();
 
-	void ini_about_page();
 	void draw_about_page();
 	void update_about_page();
 

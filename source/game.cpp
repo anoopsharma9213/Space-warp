@@ -20,6 +20,10 @@ void gamePlay::Update()
 			{
 				_store->pt[i] = power_time[i];
 			}
+			for (int i = 0; i < 10; i++)
+			{
+				_store->a[i] = achievement[i];
+			}
 
 			s3eSecureStoragePut(_store,sizeof(struct save));
 			s3eAudioStop();
@@ -107,21 +111,7 @@ gamePlay::gamePlay()
 {
 	page = 0;
 	subpage = 0;
-	//resume = 0;
-
-	/*if(s3eWindowsPhoneAdAvailable())
-	{
-		ad_control = s3eWindowsPhoneAdCreate("test_client","Image480_80");
-		s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_HEIGHT,80);
-		s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_WIDTH,480);
-		s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_HALIGN,S3E_WINDOWSPHONE_ADCONTROL_HALIGN_CENTER);
-		s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_VALIGN,S3E_WINDOWSPHONE_ADCONTROL_VALIGN_BOTTOM);
-		if(s3eSocketGetInt(S3E_SOCKET_NETWORK_AVAILABLE))
-		{
-			s3eWindowsPhoneAdShow(ad_control);
-		}
-	}*/
-
+	
 	for (int i = 0; i < 4; i++)
 	{
 		m_tem[i] = 0;
@@ -144,12 +134,16 @@ gamePlay::gamePlay()
 		{
 			power_time[i] = _store->pt[i];
 		}
+		for (int i = 0; i < 10; i++)
+		{
+			achievement[i] = _store->a[i];
+		}
 	}
 	else
 	{
-		high_score = 100000;
-		total_star = 100000;
-		collected_star = 100000;
+		high_score = 0;
+		total_star = 0;
+		collected_star = 0;
 		music = 2;
 		sc_sel = 0;
 		megawarp = 1;
@@ -162,6 +156,10 @@ gamePlay::gamePlay()
 		power_time[2] = power_time[1] = 5;
 		power_time[3] = 50;
 		page = -3;
+		for (int i = 0; i < 10; i++)
+		{
+			achievement[i] = 0;
+		}
 	}
 
 	max_lives[0] = 2;
@@ -313,10 +311,10 @@ void gamePlay::ini_Environment()
 	panel_pos.x = Iw2DGetSurfaceWidth()*0.50f-panel_size.x/2;
 	panel_pos.y = Iw2DGetSurfaceHeight()*0.50f-panel_size.y/2;
 
-	main_panel_size.x = Iw2DGetSurfaceWidth()*0.99f;
-	main_panel_size.y = Iw2DGetSurfaceHeight()*0.99f;
-	main_panel_pos.x = Iw2DGetSurfaceWidth()*0.50f-main_panel_size.x/2;
-	main_panel_pos.y = Iw2DGetSurfaceHeight()*0.50f-main_panel_size.y/2;
+	main_panel_size.x = (float)Iw2DGetSurfaceWidth();
+	main_panel_size.y = (float)Iw2DGetSurfaceHeight();
+	main_panel_pos.x = 0;
+	main_panel_pos.y = 0;
 
 	button_size.x = button_size.y = Iw2DGetSurfaceHeight()*0.17f;
 	soundm_pos.y = home_pos.y = continue_pos.y = Iw2DGetSurfaceHeight()*0.50f - button_size.y/2;
@@ -592,10 +590,15 @@ void gamePlay::ini_main_page()
 
 	sound_pos.x = (Iw2DGetSurfaceWidth()*0.50f+Iw2DGetSurfaceWidth()*0.90f)/2-button_size.x/2;
 	sound_pos.y = settings_pos.y;
+
+	achievement_size.y = achievement_size.x = Iw2DGetSurfaceWidth()*0.10f;
+	achievement_pos.x = Iw2DGetSurfaceWidth()*0.50f-achievement_size.x/2;
+	achievement_pos.y = Iw2DGetSurfaceHeight()*0.50f-achievement_size.y;
+	achievement_show = 0;
 	
 	if(s3eWindowsPhoneAdAvailable())
 	{
-		ad_control = s3eWindowsPhoneAdCreate("test_client","Image480_80");
+		ad_control = s3eWindowsPhoneAdCreate("fa23518c-a63d-4c01-a2e0-0cdd9c2c6fff","10770583");
 		s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_HEIGHT,80);
 		s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_WIDTH,480);
 		s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_HALIGN,S3E_WINDOWSPHONE_ADCONTROL_HALIGN_CENTER);
@@ -609,46 +612,7 @@ void gamePlay::ini_main_page()
 
 void gamePlay::update_main_page()
 {
-	/*
-	if (delay == 0)
-	{
-		sc_sel++;
-		if (sc_sel ==6)
-		{
-			sc_sel = 0;
-		}
-		delay = 200;
-		switch (sc_sel)
-	{
-		case 0:
-			sc_size.y = Iw2DGetSurfaceHeight()*0.20f;
-			sc_size.x = sc_size.y*0.74f;
-			break;
-		case 1:
-			sc_size.y = Iw2DGetSurfaceHeight()*0.13f;
-			sc_size.x = sc_size.y*1.53f;
-			break;
-		case 2:
-			sc_size.y = Iw2DGetSurfaceHeight()*0.15f;
-			sc_size.x = sc_size.y*1.33f;
-			break;
-		case 3:
-			sc_size.y = Iw2DGetSurfaceHeight()*0.20f;
-			sc_size.x = sc_size.y*0.99f;
-			break;
-		case 4:
-			sc_size.y = Iw2DGetSurfaceHeight()*0.09f;
-			sc_size.x = sc_size.y*2.12f;
-			break;
-		case 5:
-			sc_size.y = Iw2DGetSurfaceHeight()*0.20f;
-			sc_size.x = sc_size.y*1.02f;
-			break;
-	}
-		sc_pos.x = Iw2DGetSurfaceWidth()*0.5f - sc_size.x*0.5f;
-	sc_pos.y = Iw2DGetSurfaceHeight()*0.5f - sc_size.y*0.5f;
-	}
-	*/if(trans == 1)
+	if(trans == 1)
 	{
 		sc_pos.x -= l_speed;
 		powerglow_pos.x -= l_speed;
@@ -661,7 +625,6 @@ void gamePlay::update_main_page()
 			{
 				s3eWindowsPhoneAdSetIntProperty(ad_control,S3E_WINDOWSPHONE_ADCONTROL_WIDTH,0);
 			}
-			ini_pause_page();
 		}
 	}
 	else
@@ -706,13 +669,13 @@ void gamePlay::update_main_page()
 					switch (s3eDeviceGetInt(S3E_DEVICE_OS))
 					{
 						case S3E_OS_ID_ANDROID:
-							s3eOSExecExecute("http://www.windowsphone.com/s?appid=ab3f9c1b-68bc-43fe-ac24-231ef3d92122",false);
+							s3eOSExecExecute("http://www.windowsphone.com/s?appid=7d6a64dc-67b4-479a-bad9-d24e6c6f0161",false);
 							break;
 						case S3E_OS_ID_WP8:
-							s3eOSExecExecute("zune:navigate?appid=appab3f9c1b-68bc-43fe-ac24-231ef3d92122",false);
+							s3eOSExecExecute("zune:reviewapp?appid=app7d6a64dc-67b4-479a-bad9-d24e6c6f0161",false);
 							break;
 						default:
-							s3eOSExecExecute("http://www.windowsphone.com/s?appid=ab3f9c1b-68bc-43fe-ac24-231ef3d92122",false);
+							s3eOSExecExecute("http://www.windowsphone.com/s?appid=7d6a64dc-67b4-479a-bad9-d24e6c6f0161",false);
 							break;
 					}
 					delay = 30;
@@ -820,11 +783,6 @@ void gamePlay::draw_main_page()
 //---------------------------------------------PAUSE PAGE------------------------------------------
 //---------------------------------------------------------------------------------------------------------
 
-void gamePlay::ini_pause_page()
-{
-	
-}
-
 void gamePlay::draw_pause_page()
 {
 	Iw2DDrawImage(getresource->get_panel(),panel_pos,panel_size);
@@ -895,11 +853,6 @@ void gamePlay::update_pause_page()
 //---------------------------------------------ABOUT PAGE-------------------------------------------
 //------------------------------------------------------------------------------------------------------
 
-void gamePlay::ini_about_page()
-{
-	
-}
-
 void gamePlay::update_about_page()
 {
 	if(s3eKeyboardGetState(s3eKeyBack) & S3E_KEY_STATE_PRESSED)
@@ -912,8 +865,21 @@ void gamePlay::update_about_page()
 		if(s3ePointerGetX()>=Iw2DGetSurfaceHeight()*0.10f && s3ePointerGetX()<=Iw2DGetSurfaceHeight()*0.10f+button_size.x &&
 			s3ePointerGetY()>=Iw2DGetSurfaceHeight()*0.10f && s3ePointerGetY()<=Iw2DGetSurfaceHeight()*0.10f+button_size.y)
 		{
-			page = 0;
-			delay = 30;
+			if(delay == 0)
+			{
+				page = 0;
+				delay = 30;
+			}
+		}
+		else if(s3ePointerGetX()>=(float)Iw2DGetSurfaceWidth()-Iw2DGetSurfaceHeight()*0.10f-button_size.x/2 && s3ePointerGetX()<=(float)Iw2DGetSurfaceWidth()-Iw2DGetSurfaceHeight()*0.10f &&
+			s3ePointerGetY()>=Iw2DGetSurfaceHeight()*0.10f && s3ePointerGetY()<=Iw2DGetSurfaceHeight()*0.10f+button_size.y/2)
+		{
+			if (delay == 0)
+			{
+				page = 0;
+				s3eOSExecExecute("http://www.facebook.com/spacewarp",false);
+				delay = 30;
+			}
 		}
 		if(isslide == false)
 		{
@@ -959,15 +925,11 @@ void gamePlay::draw_about_page()
 	Iw2DDrawImage(getresource->get_panel(),main_panel_pos,main_panel_size);
 	Iw2DDrawImageRegion(getresource->get_about(),about_info_pos,CIwFVec2((float)Iw2DGetSurfaceWidth(),Iw2DGetSurfaceHeight()*0.85f),CIwFVec2(0,(float)slide+50),CIwFVec2(1280,660));
 	Iw2DDrawImage(getresource->get_resume(),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),button_size);
+	Iw2DDrawImage(getresource->get_fb(),CIwFVec2((float)Iw2DGetSurfaceWidth()-Iw2DGetSurfaceHeight()*0.10f-button_size.x/2,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(button_size.x/2,button_size.y/2));
 }
 
 //-------------------------------------------PERSONALIZE PAGE-------------------------------------------
 //------------------------------------------------------------------------------------------------------
-
-void gamePlay::ini_personalize_page()
-{
-
-}
 
 void gamePlay::update_personalize_page()
 {
@@ -1020,6 +982,10 @@ void gamePlay::update_personalize_page()
 		for (int i = 0; i < 4; i++)
 		{
 			_store->pt[i] = power_time[i];
+		}
+		for (int i = 0; i < 10; i++)
+		{
+			_store->a[i] = achievement[i];
 		}
 
 		s3eSecureStoragePut(_store,sizeof(struct save));
@@ -1289,7 +1255,6 @@ void gamePlay::draw_personalize_page()
 {
 	if(subpage == 0)
 	{
-		//Iw2DDrawImage(getresource->get_panel(),panel_pos,panel_size);
 		Iw2DDrawImageRegion(getresource->get_menu(),home_pos,button_size,CIwFVec2(0,0),CIwFVec2(100,100));
 		Iw2DDrawImageRegion(getresource->get_menu(),continue_pos,button_size,CIwFVec2(100,0),CIwFVec2(100,100));
 		Iw2DDrawImageRegion(getresource->get_menu(),soundm_pos,button_size,CIwFVec2(200,0),CIwFVec2(100,100));
@@ -1305,7 +1270,7 @@ void gamePlay::draw_personalize_page()
 				Iw2DDrawImageRegion(getresource->get_spacecraft_locked(),spacecraft_set_pos[i],spacecraft_set_size,CIwFVec2((float)(i-1)*200,0),CIwFVec2(200,200));
 			}
 		}
-		Iw2DDrawImageRegion(getresource->get_ok(),spacecraft_set_pos[sc_sel],spacecraft_tick_size,CIwFVec2(0,0),CIwFVec2(25,25));
+		Iw2DDrawImage(getresource->get_ok(),spacecraft_set_pos[sc_sel],spacecraft_tick_size);
 	}
 	else if(subpage == 2)
 	{
@@ -1319,22 +1284,30 @@ void gamePlay::draw_personalize_page()
 		{
 			case 10:
 				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.20f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,0),CIwFVec2(60,18));
+				Iw2DSetColour(0xff00ff00);
 				Iw2DDrawString("UPGRADE 1000",CIwFVec2(2*Iw2DGetSurfaceWidth()*0.11f,Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DSetColour(0xffffffff);
 				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(2*Iw2DGetSurfaceWidth()*0.115f+Iw2DGetStringWidth("UPGRADE 1000"),Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
 				break;
 			case 15:
 				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.20f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,18),CIwFVec2(60,18));
+				Iw2DSetColour(0xff00ff00);
 				Iw2DDrawString("UPGRADE 2500",CIwFVec2(2*Iw2DGetSurfaceWidth()*0.11f,Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DSetColour(0xffffffff);
 				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(2*Iw2DGetSurfaceWidth()*0.115f+Iw2DGetStringWidth("UPGRADE 2500"),Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
 				break;
 			case 20:
 				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.20f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,36),CIwFVec2(60,18));
+				Iw2DSetColour(0xff00ff00);
 				Iw2DDrawString("UPGRADE 5000",CIwFVec2(2*Iw2DGetSurfaceWidth()*0.11f,Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DSetColour(0xffffffff);
 				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(2*Iw2DGetSurfaceWidth()*0.115f+Iw2DGetStringWidth("UPGRADE 5000"),Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
 				break;
 			case 25:
 				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.20f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,54),CIwFVec2(60,18));
+				Iw2DSetColour(0xff00ff00);
 				Iw2DDrawString("UPGRADE 10000",CIwFVec2(2*Iw2DGetSurfaceWidth()*0.11f,Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DSetColour(0xffffffff);
 				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(2*Iw2DGetSurfaceWidth()*0.115f+Iw2DGetStringWidth("UPGRADE 10000"),Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
 				break;
 			case 30:
@@ -1342,7 +1315,7 @@ void gamePlay::draw_personalize_page()
 				Iw2DDrawString("MAX LEVEL",CIwFVec2(2*Iw2DGetSurfaceWidth()*0.11f,Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
 				break;
 		}
-
+		
 		Iw2DDrawString("ENCHANTER",CIwFVec2(Iw2DGetSurfaceWidth()*0.45f,Iw2DGetSurfaceHeight()*0.15f+size.y/2-font_size/2),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
 		Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.55f,Iw2DGetSurfaceHeight()*0.15f),size,CIwFVec2(50,0),CIwFVec2(50,50));
 		Iw2DDrawString("Magically Attract Stars",CIwFVec2(Iw2DGetSurfaceWidth()*0.45f,Iw2DGetSurfaceHeight()*0.17f+size.y),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
@@ -1350,22 +1323,30 @@ void gamePlay::draw_personalize_page()
 		{
 			case 5:
 				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.55f,Iw2DGetSurfaceHeight()*0.20f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,0),CIwFVec2(60,18));
+				Iw2DSetColour(0xff00ff00);
 				Iw2DDrawString("UPGRADE 1000",CIwFVec2(Iw2DGetSurfaceWidth()*0.55f+Iw2DGetSurfaceWidth()*0.12f,Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DSetColour(0xffffffff);
 				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.55f+Iw2DGetSurfaceWidth()*0.13f+Iw2DGetStringWidth("UPGRADE 1000"),Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
 				break;
 			case 10:
 				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.55f,Iw2DGetSurfaceHeight()*0.20f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,18),CIwFVec2(60,18));
+				Iw2DSetColour(0xff00ff00);
 				Iw2DDrawString("UPGRADE 2500",CIwFVec2(Iw2DGetSurfaceWidth()*0.55f+Iw2DGetSurfaceWidth()*0.12f,Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DSetColour(0xffffffff);
 				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.55f+Iw2DGetSurfaceWidth()*0.13f+Iw2DGetStringWidth("UPGRADE 2500"),Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
 				break;
 			case 15:
 				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.55f,Iw2DGetSurfaceHeight()*0.20f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,36),CIwFVec2(60,18));
+				Iw2DSetColour(0xff00ff00);
 				Iw2DDrawString("UPGRADE 5000",CIwFVec2(Iw2DGetSurfaceWidth()*0.55f+Iw2DGetSurfaceWidth()*0.12f,Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DSetColour(0xffffffff);
 				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.55f+Iw2DGetSurfaceWidth()*0.13f+Iw2DGetStringWidth("UPGRADE 5000"),Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
 				break;
 			case 20:
 				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.55f,Iw2DGetSurfaceHeight()*0.20f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,54),CIwFVec2(60,18));
+				Iw2DSetColour(0xff00ff00);
 				Iw2DDrawString("UPGRADE 10000",CIwFVec2(Iw2DGetSurfaceWidth()*0.55f+Iw2DGetSurfaceWidth()*0.12f,Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DSetColour(0xffffffff);
 				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.55f+Iw2DGetSurfaceWidth()*0.13f+Iw2DGetStringWidth("UPGRADE 10000"),Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
 				break;
 			case 25:
@@ -1373,7 +1354,6 @@ void gamePlay::draw_personalize_page()
 				Iw2DDrawString("MAX LEVEL",CIwFVec2(Iw2DGetSurfaceWidth()*0.55f+Iw2DGetSurfaceWidth()*0.12f,Iw2DGetSurfaceHeight()*0.19f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
 				break;
 		}
-
 		Iw2DDrawString("IMMORTAL",CIwFVec2(0,Iw2DGetSurfaceHeight()*0.50f+size.y/2-font_size/2),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
 		Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.50f),size,CIwFVec2(100,0),CIwFVec2(50,50));
 		Iw2DDrawString("Pass Through Objects",CIwFVec2(0,Iw2DGetSurfaceHeight()*0.52f+size.y),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
@@ -1381,22 +1361,30 @@ void gamePlay::draw_personalize_page()
 		{
 			case 5:
 				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.55f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,0),CIwFVec2(60,18));
+				Iw2DSetColour(0xff00ff00);
 				Iw2DDrawString("UPGRADE 1000",CIwFVec2(2*Iw2DGetSurfaceWidth()*0.11f,Iw2DGetSurfaceHeight()*0.54f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DSetColour(0xffffffff);
 				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(2*Iw2DGetSurfaceWidth()*0.115f+Iw2DGetStringWidth("UPGRADE 1000"),Iw2DGetSurfaceHeight()*0.54f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
 				break;
 			case 10:
 				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.55f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,18),CIwFVec2(60,18));
+				Iw2DSetColour(0xff00ff00);
 				Iw2DDrawString("UPGRADE 2500",CIwFVec2(2*Iw2DGetSurfaceWidth()*0.11f,Iw2DGetSurfaceHeight()*0.54f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DSetColour(0xffffffff);
 				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(2*Iw2DGetSurfaceWidth()*0.115f+Iw2DGetStringWidth("UPGRADE 2500"),Iw2DGetSurfaceHeight()*0.54f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
 				break;
 			case 15:
 				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.55f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,36),CIwFVec2(60,18));
+				Iw2DSetColour(0xff00ff00);
 				Iw2DDrawString("UPGRADE 5000",CIwFVec2(2*Iw2DGetSurfaceWidth()*0.11f,Iw2DGetSurfaceHeight()*0.54f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DSetColour(0xffffffff);
 				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(2*Iw2DGetSurfaceWidth()*0.115f+Iw2DGetStringWidth("UPGRADE 5000"),Iw2DGetSurfaceHeight()*0.54f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
 				break;
 			case 20:
 				Iw2DDrawImageRegion(getresource->get_power_level(),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceHeight()*0.55f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.10f,Iw2DGetSurfaceWidth()*0.10f*0.3f),CIwFVec2(0,54),CIwFVec2(60,18));
+				Iw2DSetColour(0xff00ff00);
 				Iw2DDrawString("UPGRADE 10000",CIwFVec2(2*Iw2DGetSurfaceWidth()*0.11f,Iw2DGetSurfaceHeight()*0.54f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+				Iw2DSetColour(0xffffffff);
 				Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(2*Iw2DGetSurfaceWidth()*0.115f+Iw2DGetStringWidth("UPGRADE 10000"),Iw2DGetSurfaceHeight()*0.54f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
 				break;
 			case 25:
@@ -1404,12 +1392,13 @@ void gamePlay::draw_personalize_page()
 				Iw2DDrawString("MAX LEVEL",CIwFVec2(2*Iw2DGetSurfaceWidth()*0.11f,Iw2DGetSurfaceHeight()*0.54f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
 				break;
 		}
-
 		sprintf(str,"MEGA WARP X %d",megawarp);
 		Iw2DDrawString(str,CIwFVec2(Iw2DGetSurfaceWidth()*0.48f,Iw2DGetSurfaceHeight()*0.50f+size.y/2-font_size/2),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
 		Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.55f,Iw2DGetSurfaceHeight()*0.50f),size,CIwFVec2(150,0),CIwFVec2(50,50));
 		Iw2DDrawString("AVAILABLE ONCE in each play",CIwFVec2(Iw2DGetSurfaceWidth()*0.45f,Iw2DGetSurfaceHeight()*0.52f+size.y),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+		Iw2DSetColour(0xff00ff00);
 		Iw2DDrawString("PURCHASE 1000",CIwFVec2(Iw2DGetSurfaceWidth()*0.58f,Iw2DGetSurfaceHeight()*0.54f+size.y+font_size),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f,font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+		Iw2DSetColour(0xffffffff);
 		Iw2DDrawImageRegion(getresource->get_power(),CIwFVec2(Iw2DGetSurfaceWidth()*0.58f+Iw2DGetSurfaceWidth()*0.01f+Iw2DGetStringWidth("PURCHASE 1000"),Iw2DGetSurfaceHeight()*0.54f+size.y+font_size),CIwFVec2(font_size,font_size),CIwFVec2(50,50),CIwFVec2(50,50));
 	}
 	else if (subpage == 3)
@@ -1418,114 +1407,107 @@ void gamePlay::draw_personalize_page()
 
 		if(collected_star>=1000)
 		{
-			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.02f,Iw2DGetSurfaceHeight()*0.18f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(0,0),CIwFVec2(25,25));
+			Iw2DDrawImageRegion(getresource->get_star_rank(),CIwFVec2(Iw2DGetSurfaceWidth()*0.03f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.15f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(0,0),CIwFVec2(100,100));
 		}
 		else
 		{
-			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.02f,Iw2DGetSurfaceHeight()*0.18f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(25,0),CIwFVec2(25,25));
-		}		
-		Iw2DDrawImageRegion(getresource->get_star_rank(),CIwFVec2(Iw2DGetSurfaceWidth()*0.03f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.15f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(0,0),CIwFVec2(100,100));
+			Iw2DDrawImage(getresource->get_locked(),CIwFVec2(Iw2DGetSurfaceWidth()*0.03f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.15f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f));
+		}
 		Iw2DDrawString("Attentive [Star 1000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.04f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.20f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Attentive [Star 1000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
 
 		if(collected_star>=10000)
 		{
-			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.02f,Iw2DGetSurfaceHeight()*0.30f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(0,0),CIwFVec2(25,25));
+			Iw2DDrawImageRegion(getresource->get_star_rank(),CIwFVec2(Iw2DGetSurfaceWidth()*0.03f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.27f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(100,0),CIwFVec2(100,100));
 		}
 		else
 		{
-			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.02f,Iw2DGetSurfaceHeight()*0.30f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(25,0),CIwFVec2(25,25));
+			Iw2DDrawImage(getresource->get_locked(),CIwFVec2(Iw2DGetSurfaceWidth()*0.03f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.27f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f));
 		}
-		Iw2DDrawImageRegion(getresource->get_star_rank(),CIwFVec2(Iw2DGetSurfaceWidth()*0.03f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.27f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(100,0),CIwFVec2(100,100));
 		Iw2DDrawString("Anxious [Star 10000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.04f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.32f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Anxious [Star 10000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
 
 		if(collected_star>=20000)
 		{
-			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.02f,Iw2DGetSurfaceHeight()*0.42f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(0,0),CIwFVec2(25,25));
+			Iw2DDrawImageRegion(getresource->get_star_rank(),CIwFVec2(Iw2DGetSurfaceWidth()*0.03f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.39f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(200,0),CIwFVec2(100,100));
 		}
 		else
 		{
-			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.02f,Iw2DGetSurfaceHeight()*0.42f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(25,0),CIwFVec2(25,25));
+			Iw2DDrawImage(getresource->get_locked(),CIwFVec2(Iw2DGetSurfaceWidth()*0.03f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.39f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f));
 		}
-		Iw2DDrawImageRegion(getresource->get_star_rank(),CIwFVec2(Iw2DGetSurfaceWidth()*0.03f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.39f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(200,0),CIwFVec2(100,100));
 		Iw2DDrawString("Collector [Star 20000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.04f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.44f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Collector [Star 20000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
 
 		if(collected_star>=50000)
 		{
-			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.02f,Iw2DGetSurfaceHeight()*0.54f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(0,0),CIwFVec2(25,25));
+			Iw2DDrawImageRegion(getresource->get_star_rank(),CIwFVec2(Iw2DGetSurfaceWidth()*0.03f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.51f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(300,0),CIwFVec2(100,100));
 		}
 		else
 		{
-			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.02f,Iw2DGetSurfaceHeight()*0.54f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(25,0),CIwFVec2(25,25));
+			Iw2DDrawImage(getresource->get_locked(),CIwFVec2(Iw2DGetSurfaceWidth()*0.03f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.51f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f));
 		}
-		Iw2DDrawImageRegion(getresource->get_star_rank(),CIwFVec2(Iw2DGetSurfaceWidth()*0.03f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.51f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(300,0),CIwFVec2(100,100));
 		Iw2DDrawString("Implausible [Star 50000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.04f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.56f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Implausible [Star 50000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
 
 		if(collected_star>=100000)
 		{
-			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.02f,Iw2DGetSurfaceHeight()*0.66f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(0,0),CIwFVec2(25,25));
+			Iw2DDrawImageRegion(getresource->get_star_rank(),CIwFVec2(Iw2DGetSurfaceWidth()*0.03f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.63f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(400,0),CIwFVec2(100,100));
 		}
 		else
 		{
-			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.02f,Iw2DGetSurfaceHeight()*0.66f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(25,0),CIwFVec2(25,25));
+			Iw2DDrawImage(getresource->get_locked(),CIwFVec2(Iw2DGetSurfaceWidth()*0.03f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.63f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f));
 		}
-		Iw2DDrawImageRegion(getresource->get_star_rank(),CIwFVec2(Iw2DGetSurfaceWidth()*0.03f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.63f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(400,0),CIwFVec2(100,100));
 		Iw2DDrawString("Magnate [Star 100000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.04f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.68f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Magnate [Star 100000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
 
 		if(high_score>=50000)
 		{
-			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.49f,Iw2DGetSurfaceHeight()*0.18f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(0,0),CIwFVec2(25,25));
+			Iw2DDrawImageRegion(getresource->get_ranks(),CIwFVec2(Iw2DGetSurfaceWidth()*0.48f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.15f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(0,0),CIwFVec2(100,100));
 		}
 		else
 		{
-			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.49f,Iw2DGetSurfaceHeight()*0.18f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(25,0),CIwFVec2(25,25));
+			Iw2DDrawImage(getresource->get_locked(),CIwFVec2(Iw2DGetSurfaceWidth()*0.48f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.15f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f));
 		}
-		Iw2DDrawImageRegion(getresource->get_ranks(),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.15f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(0,0),CIwFVec2(100,100));
-		Iw2DDrawString("Novice [Highscore 50000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.51f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.20f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Novice [Highscore 50000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+		Iw2DDrawString("Novice [Highscore 50000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.49f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.20f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Novice [Highscore 50000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
 
 		if(high_score>=100000)
 		{
-			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.49f,Iw2DGetSurfaceHeight()*0.30f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(0,0),CIwFVec2(25,25));
+			Iw2DDrawImageRegion(getresource->get_ranks(),CIwFVec2(Iw2DGetSurfaceWidth()*0.48f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.27f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(100,0),CIwFVec2(100,100));
 		}
 		else
 		{
-			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.49f,Iw2DGetSurfaceHeight()*0.30f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(25,0),CIwFVec2(25,25));
+			Iw2DDrawImage(getresource->get_locked(),CIwFVec2(Iw2DGetSurfaceWidth()*0.48f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.27f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f));
 		}
-		Iw2DDrawImageRegion(getresource->get_ranks(),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.27f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(100,0),CIwFVec2(100,100));
-		Iw2DDrawString("Apprentice [Highscore 100000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.51f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.32f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Apprentice [Highscore 100000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+		Iw2DDrawString("Apprentice [Highscore 100000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.49f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.32f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Apprentice [Highscore 100000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
 
 		if (high_score>=200000)
 		{
-			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.49f,Iw2DGetSurfaceHeight()*0.42f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(0,0),CIwFVec2(25,25));
+			Iw2DDrawImageRegion(getresource->get_ranks(),CIwFVec2(Iw2DGetSurfaceWidth()*0.48f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.39f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(200,0),CIwFVec2(100,100));
 		}
 		else
 		{
-			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.49f,Iw2DGetSurfaceHeight()*0.42f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(25,0),CIwFVec2(25,25));
+			Iw2DDrawImage(getresource->get_locked(),CIwFVec2(Iw2DGetSurfaceWidth()*0.48f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.39f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f));
 		}
-		Iw2DDrawImageRegion(getresource->get_ranks(),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.39f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(200,0),CIwFVec2(100,100));
-		Iw2DDrawString("Paramount [Highscore 200000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.51f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.44f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Paramount [Highscore 200000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+		Iw2DDrawString("Paramount [Highscore 200000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.49f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.44f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Paramount [Highscore 200000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
 
 		if(high_score>=300000)
 		{
-			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.49f,Iw2DGetSurfaceHeight()*0.54f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(0,0),CIwFVec2(25,25));
+			Iw2DDrawImageRegion(getresource->get_ranks(),CIwFVec2(Iw2DGetSurfaceWidth()*0.48f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.51f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(300,0),CIwFVec2(100,100));
 		}
 		else
 		{
-			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.49f,Iw2DGetSurfaceHeight()*0.54f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(25,0),CIwFVec2(25,25));
+			Iw2DDrawImage(getresource->get_locked(),CIwFVec2(Iw2DGetSurfaceWidth()*0.48f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.51f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f));
 		}
-		Iw2DDrawImageRegion(getresource->get_ranks(),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.51f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(300,0),CIwFVec2(100,100));
-		Iw2DDrawString("Mythical [Highscore 300000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.51f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.56f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Mythical [Highscore 300000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+		Iw2DDrawString("Mythical [Highscore 300000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.49f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.56f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Mythical [Highscore 300000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
 
 		if (high_score>=500000)
 		{
-			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.49f,Iw2DGetSurfaceHeight()*0.66f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(0,0),CIwFVec2(25,25));
+			Iw2DDrawImageRegion(getresource->get_ranks(),CIwFVec2(Iw2DGetSurfaceWidth()*0.48f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.63f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(400,0),CIwFVec2(100,100));
 		}
 		else
 		{
-			Iw2DDrawImageRegion(getresource->get_ok(),CIwFVec2(Iw2DGetSurfaceWidth()*0.49f,Iw2DGetSurfaceHeight()*0.66f),CIwFVec2(Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.04f),CIwFVec2(25,0),CIwFVec2(25,25));
+			Iw2DDrawImage(getresource->get_locked(),CIwFVec2(Iw2DGetSurfaceWidth()*0.48f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.63f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f));
 		}
-		Iw2DDrawImageRegion(getresource->get_ranks(),CIwFVec2(Iw2DGetSurfaceWidth()*0.50f+Iw2DGetSurfaceHeight()*0.04f,Iw2DGetSurfaceHeight()*0.63f),CIwFVec2(Iw2DGetSurfaceHeight()*0.10f,Iw2DGetSurfaceHeight()*0.10f),CIwFVec2(400,0),CIwFVec2(100,100));
-		Iw2DDrawString("Legendary [Highscore 500000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.51f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.68f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Legendary [Highscore 500000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
+		Iw2DDrawString("Legendary [Highscore 500000]",CIwFVec2(Iw2DGetSurfaceWidth()*0.49f+Iw2DGetSurfaceHeight()*0.14f,Iw2DGetSurfaceHeight()*0.68f-font_size/2),CIwFVec2((float)Iw2DGetStringWidth("Legendary [Highscore 500000]"),font_size),IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
 	}
+	Iw2DDrawImageRegion(getresource->get_bonus_star(),CIwFVec2(Iw2DGetSurfaceWidth()*0.005f,Iw2DGetSurfaceHeight()*0.005f),CIwFVec2(Iw2DGetSurfaceHeight()*0.05f,Iw2DGetSurfaceHeight()*0.05f),CIwFVec2((float)bstar_x,(float)bstar_y),CIwFVec2(50,50));
+	sprintf(str,"%.0f",total_star);
+	Iw2DDrawString(str,star_pos,star_size,IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
 }
 
 //----------------------------------------------PLAY PAGE-------------------------------------------
@@ -1928,6 +1910,10 @@ void gamePlay::update_play_page()
 			{
 				_store->pt[i] = power_time[i];
 			}
+			for (int i = 0; i < 10; i++)
+			{
+				_store->a[i] = achievement[i];
+			}
 
 			s3eSecureStoragePut(_store,sizeof(struct save));
 
@@ -2003,6 +1989,11 @@ void gamePlay::update_play_page()
 		}
 		bstar_x = 0;
 	}
+
+	if (achievement_show > 0)
+	{
+		achievement_show--;
+	}
 }
 
 void gamePlay::draw_play_page()
@@ -2064,7 +2055,6 @@ void gamePlay::draw_play_page()
 	}
 
 	Iw2DDrawImageRegion(getresource->get_bonus_star(),CIwFVec2(Iw2DGetSurfaceWidth()*0.005f,Iw2DGetSurfaceHeight()*0.005f),CIwFVec2(Iw2DGetSurfaceHeight()*0.05f,Iw2DGetSurfaceHeight()*0.05f),CIwFVec2((float)bstar_x,(float)bstar_y),CIwFVec2(50,50));
-
 	sprintf(str,"%.0f",star);
 	Iw2DDrawString(str,star_pos,star_size,IW_2D_FONT_ALIGN_LEFT,IW_2D_FONT_ALIGN_CENTRE);
 	
@@ -2181,6 +2171,115 @@ void gamePlay::draw_play_page()
 				break;
 			case 4:
 				Iw2DDrawImageRegion(getresource->get_powerglow(),powerglow_pos,powerglow_size,CIwFVec2(300,300),CIwFVec2(300,300));
+				break;
+		}
+	}
+	Iw2DSetColour(0xffffffff);
+
+	if(star+collected_star>=100000 && achievement[9] == 0)
+	{
+		achievement_show_id = 9;
+		achievement_show = (int)l_speed*20;
+		achievement[9] = 1;
+	}
+	else if(star+collected_star>=50000 && achievement[8] == 0)
+	{
+		achievement_show_id = 8;
+		achievement_show = (int)l_speed*20;
+		achievement[8] = 1;
+	}
+	else if(star+collected_star>=20000 && achievement[7] == 0)
+	{
+		achievement_show_id = 7;
+		achievement_show = (int)l_speed*20;
+		achievement[7] = 1;
+	}
+	else if(star+collected_star>=10000 && achievement[6] == 0)
+	{
+		achievement_show_id = 6;
+		achievement_show = (int)l_speed*20;
+		achievement[6] = 1;
+	}
+	else if(star+collected_star>=1000 && achievement[5] == 0)
+	{
+		achievement_show_id = 5;
+		achievement_show = (int)l_speed*20;
+		achievement[5] = 1;
+	}
+	else if(score>=500000 && achievement[4] == 0)
+	{
+		achievement_show_id = 4;
+		achievement_show = (int)l_speed*20;
+		achievement[4] = 1;
+	}
+	else if(score>=300000 && achievement[3] == 0)
+	{
+		achievement_show_id = 3;
+		achievement_show = (int)l_speed*20;
+		achievement[3] = 1;
+	}
+	else if(score>=200000 && achievement[2] == 0)
+	{
+		achievement_show_id = 2;
+		achievement_show = (int)l_speed*20;
+		achievement[2] = 1;
+	}
+	else if(score>=100000 && achievement[1] == 0)
+	{
+		achievement_show_id = 1;
+		achievement_show = (int)l_speed*20;
+		achievement[1] = 1;
+	}
+	else if(score>=50000 && achievement[0] == 0)
+	{
+		achievement_show_id = 0;
+		achievement_show = (int)l_speed*20;
+		achievement[0] = 1;
+	}
+
+	if(achievement_show > 0)
+	{
+		switch (achievement_show_id)
+		{
+			case 0:
+				Iw2DDrawImageRegion(getresource->get_ranks(),achievement_pos,achievement_size,CIwFVec2(0,0),CIwFVec2(100,100));
+				Iw2DDrawString("Achievement Unlocked [ NOVICE ]",CIwFVec2(Iw2DGetSurfaceWidth()*0.50f-Iw2DGetStringWidth("Achievement Unlocked [ NOVICE ]")/2,Iw2DGetSurfaceHeight()*0.50f),CIwFVec2((float)Iw2DGetStringWidth("Achievement Unlocked [ NOVICE ]"),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+				break;
+			case 1:
+				Iw2DDrawImageRegion(getresource->get_ranks(),achievement_pos,achievement_size,CIwFVec2(100,0),CIwFVec2(100,100));
+				Iw2DDrawString("Achievement Unlocked [ APPRENTICE ]",CIwFVec2(Iw2DGetSurfaceWidth()*0.50f-Iw2DGetStringWidth("Achievement Unlocked [ APPRENTICE ]")/2,Iw2DGetSurfaceHeight()*0.50f),CIwFVec2((float)Iw2DGetStringWidth("Achievement Unlocked [ APPRENTICE ]"),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+				break;
+			case 2:
+				Iw2DDrawImageRegion(getresource->get_ranks(),achievement_pos,achievement_size,CIwFVec2(200,0),CIwFVec2(100,100));
+				Iw2DDrawString("Achievement Unlocked [ PARAMOUNT ]",CIwFVec2(Iw2DGetSurfaceWidth()*0.50f-Iw2DGetStringWidth("Achievement Unlocked [ PARAMOUNT ]")/2,Iw2DGetSurfaceHeight()*0.50f),CIwFVec2((float)Iw2DGetStringWidth("Achievement Unlocked [ PARAMOUNT ]"),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+				break;
+			case 3:
+				Iw2DDrawImageRegion(getresource->get_ranks(),achievement_pos,achievement_size,CIwFVec2(300,0),CIwFVec2(100,100));
+				Iw2DDrawString("Achievement Unlocked [ MYTHICAL ]",CIwFVec2(Iw2DGetSurfaceWidth()*0.50f-Iw2DGetStringWidth("Achievement Unlocked [ MYTHICAL ]")/2,Iw2DGetSurfaceHeight()*0.50f),CIwFVec2((float)Iw2DGetStringWidth("Achievement Unlocked [ MYTHICAL ]"),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+				break;
+			case 4:
+				Iw2DDrawImageRegion(getresource->get_ranks(),achievement_pos,achievement_size,CIwFVec2(400,0),CIwFVec2(100,100));
+				Iw2DDrawString("Achievement Unlocked [ LEGENDARY ]",CIwFVec2(Iw2DGetSurfaceWidth()*0.50f-Iw2DGetStringWidth("Achievement Unlocked [ LEGENDARY ]")/2,Iw2DGetSurfaceHeight()*0.50f),CIwFVec2((float)Iw2DGetStringWidth("Achievement Unlocked [ LEGENDARY ]"),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+				break;
+			case 5:
+				Iw2DDrawImageRegion(getresource->get_star_rank(),achievement_pos,achievement_size,CIwFVec2(0,0),CIwFVec2(100,100));
+				Iw2DDrawString("Achievement Unlocked [ ATTENTIVE ]",CIwFVec2(Iw2DGetSurfaceWidth()*0.50f-Iw2DGetStringWidth("Achievement Unlocked [ ATTENTIVE ]")/2,Iw2DGetSurfaceHeight()*0.50f),CIwFVec2((float)Iw2DGetStringWidth("Achievement Unlocked [ ATTENTIVE ]"),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+				break;
+			case 6:
+				Iw2DDrawImageRegion(getresource->get_star_rank(),achievement_pos,achievement_size,CIwFVec2(100,0),CIwFVec2(100,100));
+				Iw2DDrawString("Achievement Unlocked [ ANXIOUS ]",CIwFVec2(Iw2DGetSurfaceWidth()*0.50f-Iw2DGetStringWidth("Achievement Unlocked [ ANXIOUS ]")/2,Iw2DGetSurfaceHeight()*0.50f),CIwFVec2((float)Iw2DGetStringWidth("Achievement Unlocked [ ANXIOUS ]"),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+				break;
+			case 7:
+				Iw2DDrawImageRegion(getresource->get_star_rank(),achievement_pos,achievement_size,CIwFVec2(200,0),CIwFVec2(100,100));
+				Iw2DDrawString("Achievement Unlocked [ COLLECTOR ]",CIwFVec2(Iw2DGetSurfaceWidth()*0.50f-Iw2DGetStringWidth("Achievement Unlocked [ COLLECTOR ]")/2,Iw2DGetSurfaceHeight()*0.50f),CIwFVec2((float)Iw2DGetStringWidth("Achievement Unlocked [ COLLECTOR ]"),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+				break;
+			case 8:
+				Iw2DDrawImageRegion(getresource->get_star_rank(),achievement_pos,achievement_size,CIwFVec2(300,0),CIwFVec2(100,100));
+				Iw2DDrawString("Achievement Unlocked [ IMPLAUSIBLE ]",CIwFVec2(Iw2DGetSurfaceWidth()*0.50f-Iw2DGetStringWidth("Achievement Unlocked [ IMPLAUSIBLE ]")/2,Iw2DGetSurfaceHeight()*0.50f),CIwFVec2((float)Iw2DGetStringWidth("Achievement Unlocked [ IMPLAUSIBLE ]"),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
+				break;
+			case 9:
+				Iw2DDrawImageRegion(getresource->get_star_rank(),achievement_pos,achievement_size,CIwFVec2(400,0),CIwFVec2(100,100));
+				Iw2DDrawString("Achievement Unlocked [ MAGNATE ]",CIwFVec2(Iw2DGetSurfaceWidth()*0.50f-Iw2DGetStringWidth("Achievement Unlocked [ MAGNATE ]")/2,Iw2DGetSurfaceHeight()*0.50f),CIwFVec2((float)Iw2DGetStringWidth("Achievement Unlocked [ MAGNATE ]"),font_size),IW_2D_FONT_ALIGN_CENTRE,IW_2D_FONT_ALIGN_CENTRE);
 				break;
 		}
 	}
