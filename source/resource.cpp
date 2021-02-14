@@ -34,6 +34,12 @@ Resources::Resources()
 	comet = Iw2DCreateImageResource("comet");
 	explosion = Iw2DCreateImageResource("explosion");
 
+	panel = Iw2DCreateImageResource("panel");
+	settings = Iw2DCreateImageResource("settings");
+	home = Iw2DCreateImageResource("home");
+	resume = Iw2DCreateImageResource("continue");
+	sound_key = Iw2DCreateImageResource("sound_key");
+
 	font = Iw2DCreateFontResource("viner26_white");
 }
 
@@ -60,6 +66,12 @@ Resources::~Resources()
 	}
 	delete comet;
 	delete explosion;
+
+	delete settings;
+	delete panel;
+	delete sound_key;
+	delete home;
+	delete resume;
 
 	delete font;
 

@@ -34,7 +34,13 @@ private:
 	CIw2DImage *bonus_star;
 	CIw2DFont *font;
 
-	
+	// Interface----------------------
+
+	CIw2DImage *settings;
+	CIw2DImage *sound_key;
+	CIw2DImage *home;
+	CIw2DImage *resume;
+	CIw2DImage *panel;
 
 public:
 
@@ -59,6 +65,12 @@ public:
 	CIw2DImage *get_bonus_star()		{return bonus_star;}
 	
 	CIw2DFont *get_font()				{return font;}
+
+	CIw2DImage *get_sound_key()			{return sound_key;}
+	CIw2DImage *get_home()				{return home;}
+	CIw2DImage *get_resume()			{return resume;}
+	CIw2DImage *get_settings()			{return settings;}
+	CIw2DImage *get_panel()				{return panel;}
 
 	Resources();
 	~Resources();

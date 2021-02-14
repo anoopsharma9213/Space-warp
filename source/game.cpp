@@ -19,7 +19,7 @@ void gamePlay::Update()
 	}
 
 
-	if(s3eDeviceGetInt(S3E_DEVICE_OS)==S3E_OS_ID_WP8)
+	if(s3eDeviceGetInt(S3E_DEVICE_OS)==S3E_OS_ID_WP8 && music == 2)
 	{
 		switch (m_tem[0])
 		{
@@ -48,6 +48,10 @@ void gamePlay::Update()
 			s3eAudioSetInt(S3E_AUDIO_POSITION,0);
 		}
 	}
+	if(delay>0)
+	{
+		delay--;
+	}
 	update_Environment();
 
 	if(page == 0)
@@ -57,6 +61,10 @@ void gamePlay::Update()
 	else if(page == 1)
 	{
 		update_play_page();
+	}
+	else if(page == -1)
+	{
+		update_pause_page();
 	}
 }
 
@@ -76,6 +84,11 @@ void gamePlay::Render()
 	{
 		draw_play_page();
 	}
+	else if(page == -1)
+	{
+		draw_play_page();
+		draw_pause_page();
+	}
 		
 	Iw2DSurfaceShow();
 }
@@ -83,7 +96,7 @@ void gamePlay::Render()
 gamePlay::gamePlay()
 {
 	page = 0;
-	resume = 0;
+	//resume = 0;
 
 	/*if(s3eWindowsPhoneAdAvailable())
 			{
@@ -130,8 +143,8 @@ gamePlay::gamePlay()
 	max_lives[2] = 4;
 	max_lives[3] = 5;
 	max_lives[4] = 2;
-
-	if (music == 1)
+	
+	if(music == 2)
 	{
 		s3eAudioPlay("sound/bg.mp3",1);
 	}
@@ -153,6 +166,7 @@ gamePlay::gamePlay()
 		g_speed = 3;
 	}
 	l_speed = g_speed;
+	delay = 0;
 
 	Iw2DSetFont(getresource->get_font());
 
@@ -160,6 +174,7 @@ gamePlay::gamePlay()
 	ini_Environment();
 	ini_main_page();
 	ini_play_page();
+	ini_pause_page();
 }
 
 gamePlay::~gamePlay()
@@ -231,6 +246,13 @@ void gamePlay::ini_Environment()
 	{
 		cp_col = 0;
 	}
+
+	panel_size.x = Iw2DGetSurfaceWidth()*0.70f;
+	panel_size.y = Iw2DGetSurfaceHeight()*0.70f;
+	panel_pos.x = Iw2DGetSurfaceWidth()*0.50f-panel_size.x/2;
+	panel_pos.y = Iw2DGetSurfaceHeight()*0.50f-panel_size.y/2;
+
+	button_size.x = button_size.y = Iw2DGetSurfaceHeight()*0.17f;
 }
 
 void gamePlay::update_Environment()
@@ -532,6 +554,88 @@ void gamePlay::draw_main_page()
 	Iw2DDrawRect(energy_pos,energy_size);
 }
 
+//---------------------------------------------PAUSE PAGE------------------------------------------
+
+void gamePlay::ini_pause_page()
+{
+	sound_pos.y = home_pos.y = continue_pos.y = Iw2DGetSurfaceHeight()*0.50f - button_size.y/2;
+
+	continue_pos.x = Iw2DGetSurfaceWidth()*0.50f - button_size.x/2;
+	home_pos.x = (Iw2DGetSurfaceWidth()*0.50f+Iw2DGetSurfaceWidth()*0.15f)/2 - button_size.x/2;
+	sound_pos.x = (Iw2DGetSurfaceWidth()*0.85f+Iw2DGetSurfaceWidth()*0.50f)/2 - button_size.x/2;
+	if (music != 2)
+	{
+		s3eAudioPause();
+	}
+}
+
+void gamePlay::draw_pause_page()
+{
+	Iw2DDrawImage(getresource->get_panel(),panel_pos,panel_size);
+	Iw2DDrawImage(getresource->get_home(),home_pos,button_size);
+	Iw2DDrawImage(getresource->get_resume(),continue_pos,button_size);
+	if(music == 0)
+	{
+		Iw2DDrawImageRegion(getresource->get_sound_key(),sound_pos,button_size,CIwFVec2(200,0),CIwFVec2(100,98));
+	}
+	else if(music == 1)
+	{
+		Iw2DDrawImageRegion(getresource->get_sound_key(),sound_pos,button_size,CIwFVec2(0,0),CIwFVec2(100,98));
+	}
+	else
+	{
+		Iw2DDrawImageRegion(getresource->get_sound_key(),sound_pos,button_size,CIwFVec2(100,0),CIwFVec2(100,98));
+	}
+}
+
+void gamePlay::update_pause_page()
+{
+	if(s3eKeyboardGetState(s3eKeyBack) & S3E_KEY_STATE_PRESSED)
+	{
+		page = 1;
+		s3eKeyboardClearState();
+	}
+	if( (s3ePointerGetState(S3E_POINTER_BUTTON_SELECT) & S3E_POINTER_STATE_DOWN))
+	{
+		if(s3ePointerGetX() >= home_pos.x && s3ePointerGetX() <= home_pos.x+button_size.x &&
+			s3ePointerGetY() >= home_pos.y && s3ePointerGetY() <= home_pos.y+button_size.y)
+		{
+			blast = 0;
+			page = 0;
+			ini_main_page();
+			ini_play_page();
+		}
+		else if(s3ePointerGetX() >= continue_pos.x && s3ePointerGetX() <= continue_pos.x+button_size.x &&
+			s3ePointerGetY() >= continue_pos.y && s3ePointerGetY() <= continue_pos.y+button_size.y)
+		{
+			page = 1;
+		}
+		else if(s3ePointerGetX() >= sound_pos.x && s3ePointerGetX() <= sound_pos.x+button_size.x &&
+			s3ePointerGetY() >= sound_pos.y && s3ePointerGetY() <= sound_pos.y+button_size.y)
+		{
+			if(music == 0 && delay == 0)
+			{
+				music = 1;
+				CIwSoundSpec* SoundSpec = (CIwSoundSpec*)getresource->Effects->GetResNamed("star", IW_SOUND_RESTYPE_SPEC);
+				CIwSoundInst* SoundInstance = SoundSpec->Play();
+				delay = 50;
+			}
+			else if(music == 1 && delay == 0)
+			{
+				music = 2;
+				s3eAudioPlay("sound/bg.mp3",1);
+				delay = 50;
+			}
+			else if(music == 2 && delay == 0)
+			{
+				music = 0;
+				s3eAudioStop();
+				delay = 50;
+			}
+		}
+	}
+}
+
 //----------------------------------------------PLAY PAGE-------------------------------------------
 
 void gamePlay::ini_play_page()
@@ -596,7 +700,8 @@ void gamePlay::update_play_page()
 		//-----------Back Key Press control---------------
 		if(s3eKeyboardGetState(s3eKeyBack) & S3E_KEY_STATE_PRESSED)
 		{
-			page = 0;
+			page = -1;
+			s3eKeyboardClearState();
 		}
 
 		//---------------speed control-------------------------
@@ -678,8 +783,11 @@ void gamePlay::update_play_page()
 				blast=1;
 				b_x = 0;
 				b_y = 0;
-				CIwSoundSpec* SoundSpec = (CIwSoundSpec*)getresource->Effects->GetResNamed("explosion", IW_SOUND_RESTYPE_SPEC);
-				CIwSoundInst* SoundInstance = SoundSpec->Play();
+				if(music!=0)
+				{
+					CIwSoundSpec* SoundSpec = (CIwSoundSpec*)getresource->Effects->GetResNamed("explosion", IW_SOUND_RESTYPE_SPEC);
+					CIwSoundInst* SoundInstance = SoundSpec->Play();
+				}
 			}
 		}
 		for (int i = 0; i < 2; i++)
@@ -691,8 +799,11 @@ void gamePlay::update_play_page()
 				blast=1;
 				b_x = 0;
 				b_y = 0;
-				CIwSoundSpec* SoundSpec = (CIwSoundSpec*)getresource->Effects->GetResNamed("explosion", IW_SOUND_RESTYPE_SPEC);
-				CIwSoundInst* SoundInstance = SoundSpec->Play();
+				if(music!=0)
+				{
+					CIwSoundSpec* SoundSpec = (CIwSoundSpec*)getresource->Effects->GetResNamed("explosion", IW_SOUND_RESTYPE_SPEC);
+					CIwSoundInst* SoundInstance = SoundSpec->Play();
+				}
 			}
 
 			//-----------energy absorption-----------------
@@ -754,8 +865,11 @@ void gamePlay::update_play_page()
 			{
 				bstar_show[i]=0;
 				star++;
-				CIwSoundSpec* SoundSpec = (CIwSoundSpec*)getresource->Effects->GetResNamed("star", IW_SOUND_RESTYPE_SPEC);
-				CIwSoundInst* SoundInstance = SoundSpec->Play();
+				if(music!=0)
+				{
+					CIwSoundSpec* SoundSpec = (CIwSoundSpec*)getresource->Effects->GetResNamed("star", IW_SOUND_RESTYPE_SPEC);
+					CIwSoundInst* SoundInstance = SoundSpec->Play();
+				}
 			}
 		}
 

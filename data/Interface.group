@@ -4,6 +4,10 @@ CIwResGroup
 
 	"design/settings.png"
 	"design/energy.png"
+	"design/sound_key.png"
+	"design/home.png"
+	"design/continue.png"
+	"design/panel.png"
 
 	"effects/explosion.wav"
 	"effects/star.wav"

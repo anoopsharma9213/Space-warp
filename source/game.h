@@ -15,7 +15,7 @@ private:
 	}*_store;
 
 	char str[50];
-	int page, resume;
+	int page, delay;
 	float g_speed, l_speed, t_speed;
 
 	int m_tem[4];
@@ -59,6 +59,7 @@ private:
 	//int schannel;
 	int music, energy;
 	CIwFVec2 energy_size, energy_pos;
+	CIwFVec2 panel_size, panel_pos, continue_pos, home_pos, sound_pos, button_size;
 
 	//------Collectibles------------
 	float star, score, lives, max_lives[5];
@@ -92,6 +93,10 @@ public:
 	void ini_play_page();
 	void draw_play_page();
 	void update_play_page();
+
+	void ini_pause_page();
+	void draw_pause_page();
+	void update_pause_page();
 
 	bool compare(CIwFVec2,CIwFVec2,CIwFVec2,CIwFVec2);
 	bool com_compare(CIwFVec2,CIwFVec2,CIwFVec2,CIwFVec2);
